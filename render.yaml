@@ -1,0 +1,14 @@
+# Render 一键部署用（可选）
+# 也可在 Render 控制台里手动建 Web Service，不依赖此文件。
+services:
+  - type: web
+    name: emotion-diary
+    runtime: python
+    region: singapore
+    buildCommand: "pip install -r web/requirements.txt"
+    startCommand: "python web/app.py"
+    envVars:
+      - key: ARK_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.11"

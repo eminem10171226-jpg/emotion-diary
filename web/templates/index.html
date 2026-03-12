@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Emotion Diary</title>
+  <meta name="theme-color" content="#e85a7a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="EmotionDiary">
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+  <link rel="apple-touch-icon" href="/static/icon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AI Emotion Diary</h1>
+      <div class="top-bar">
+        <label>Persona</label>
+        <select id="persona">
+          {% for name in personas %}
+          <option value="{{ name }}">{{ name }}</option>
+          {% endfor %}
+        </select>
+        <label>Language</label>
+        <select id="language">
+          <option value="auto">Auto</option>
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+        <nav>
+          <a href="#history">History</a>
+          <a href="#trends">Trends</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="diary-section">
+        <h2>Write your feelings</h2>
+        <textarea id="diary" rows="6" placeholder="Write your feelings today (emoji is supported)."></textarea>
+        <button id="analyze">Analyze my emotion</button>
+        <div id="analysis-result" class="result-box hidden"></div>
+        <div id="analysis-error" class="error-box hidden"></div>
+      </section>
+
+      <section id="history" class="section">
+        <h2>History</h2>
+        <div id="history-list" class="history-list"></div>
+      </section>
+
+      <section id="trends" class="section">
+        <h2>Emotion trends (last 7 days)</h2>
+        <div class="chart-wrap">
+          <canvas id="trend-chart"></canvas>
+        </div>
+        <h3>Top keywords (last 14 days)</h3>
+        <div id="keywords" class="keywords"></div>
+      </section>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

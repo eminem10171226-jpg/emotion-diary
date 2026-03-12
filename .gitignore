@@ -1,0 +1,8 @@
+# 不要提交到 GitHub，避免泄露
+.env
+*.db
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env.local
