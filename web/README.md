@@ -1,6 +1,8 @@
 # AI Emotion Diary - Web 版
 
-与桌面/Kivy 版共用同一套 `ai_client.py` 和 `models.py`（以及同一个 `emotion_diary.db`），仅多一个网页界面。
+与桌面/Kivy 版共用同一套 `ai_client.py` 和 `models.py`。本地默认使用 `emotion_diary.db`（SQLite）。
+
+**云端部署（Render 等）必读：** 免费实例上的 SQLite 文件在容器重启后**可能丢失**，导致第二天历史为空。请在云平台**创建 PostgreSQL**，把连接串设为环境变量 **`DATABASE_URL`**，程序会自动改用 PostgreSQL，历史记录即可长期保存。创建数据库后，在 Web Service 的 Environment 里添加 `DATABASE_URL`（Render 会提供 Internal Database URL），重新部署即可。
 
 ## 运行方式
 

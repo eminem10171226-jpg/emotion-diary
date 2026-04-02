@@ -37,12 +37,18 @@ def ensure_session():
 @app.after_request
 def set_session_cookie(response):
     if request.cookies.get(COOKIE_SESSION) != getattr(g, "session_id", None):
+        # Render 等反向代理下用 HTTPS，Secure 有助于浏览器长期保留 Cookie
+        secure = (
+            request.headers.get("X-Forwarded-Proto", "").lower() == "https"
+            or request.is_secure
+        )
         response.set_cookie(
             COOKIE_SESSION,
             g.session_id,
             max_age=COOKIE_MAX_AGE,
             samesite="Lax",
             httponly=True,
+            secure=secure,
         )
     return response
 
