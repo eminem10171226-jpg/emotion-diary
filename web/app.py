@@ -58,6 +58,16 @@ def index():
     return render_template("index.html", personas=[p.name for p in PERSONAS])
 
 
+@app.route("/history")
+def history_page():
+    return render_template("history.html")
+
+
+@app.route("/trends")
+def trends_page():
+    return render_template("trends.html")
+
+
 @app.route("/api/analyze", methods=["POST"])
 def api_analyze():
     data = request.get_json() or {}
@@ -66,7 +76,7 @@ def api_analyze():
     language = data.get("language") or "auto"
 
     if not content:
-        return jsonify({"error": "Please write something first."}), 400
+        return jsonify({"error": "请先输入日记内容。"}), 400
 
     try:
         session_id = g.session_id

@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-ARK_API_KEY = os.getenv("ARK_API_KEY", "cac93c9b-7e90-4b8c-808d-e0d528421a39")
+ARK_API_KEY = os.getenv("ARK_API_KEY", "").strip()
 ARK_API_BASE = os.getenv(
     "ARK_API_BASE",
     "https://ark.cn-beijing.volces.com/api/v3/chat/completions",

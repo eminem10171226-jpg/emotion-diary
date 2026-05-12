@@ -1,6 +1,11 @@
 # 不要提交到 GitHub，避免泄露
 .env
+.env.*
+!.env.example
 *.db
+*.key
+secrets.json
+secrets.*
 __pycache__/
 *.pyc
 .venv/
