@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI 情绪日记 - 历史记录</title>
+  <meta name="theme-color" content="#e85a7a">
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+  <link rel="apple-touch-icon" href="/static/icon.svg">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -17,12 +21,29 @@
           <a href="/">分析</a>
           <a class="active" href="/history">历史记录</a>
           <a href="/trends">趋势分析</a>
+          <a href="/kit">急救包</a>
         </nav>
       </div>
     </header>
     <main>
-      <section class="section card">
-        <h2>历史记录</h2>
+      <section class="section card history-panel">
+        <div class="history-title-row">
+          <div>
+            <p class="section-kicker">Timeline</p>
+            <h2>历史记录</h2>
+          </div>
+        </div>
+        <div id="history-summary" class="history-summary hidden"></div>
+        <div id="mood-calendar" class="mood-calendar"></div>
+        <div class="history-search">
+          <input id="history-search" type="search" placeholder="搜索情绪、摘要、日期或分数">
+          <select id="history-score-filter">
+            <option value="all">全部分数</option>
+            <option value="high">70 分以上</option>
+            <option value="mid">40-69 分</option>
+            <option value="low">低于 40 分</option>
+          </select>
+        </div>
         <div id="history-list" class="history-list"></div>
       </section>
     </main>

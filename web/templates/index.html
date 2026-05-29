@@ -37,19 +37,85 @@
           <a class="active" href="/">分析</a>
           <a href="/history">历史记录</a>
           <a href="/trends">趋势分析</a>
+          <a href="/kit">急救包</a>
         </nav>
       </div>
     </header>
 
     <main>
-      <section class="diary-section card">
-        <h2>记录今日感受</h2>
-        <textarea id="diary" rows="6" placeholder="写下你今天的心情（支持 emoji）。"></textarea>
-        <div class="action-row">
+      <section class="diary-section card composer-card">
+        <div class="composer-head">
+          <div>
+            <p class="section-kicker">Today</p>
+            <h2>记录今日感受</h2>
+          </div>
+          <span id="draft-count" class="draft-count">0 字</span>
+        </div>
+        <div class="textarea-shell">
+          <textarea id="diary" rows="6" placeholder="写下你今天的心情（支持 emoji）。"></textarea>
+        </div>
+        <div class="action-row composer-actions">
+          <span class="privacy-note">仅保存在你的当前会话</span>
+          <button id="voice-diary" class="secondary-button" type="button">语音输入</button>
           <button id="analyze">开始分析</button>
         </div>
+        <div id="offline-drafts" class="offline-drafts hidden"></div>
         <div id="analysis-result" class="result-box hidden result-pretty"></div>
         <div id="analysis-error" class="error-box hidden"></div>
+      </section>
+      <section class="section card ritual-panel hidden" id="ritual-panel">
+        <div class="mailbox-title-row">
+          <div>
+            <p class="section-kicker">Ritual</p>
+            <h2>情绪仪式</h2>
+          </div>
+        </div>
+        <div id="ritual-actions" class="ritual-actions"></div>
+      </section>
+      <section class="section card future-panel">
+        <div class="mailbox-title-row">
+          <div>
+            <p class="section-kicker">Future Me</p>
+            <h2>未来的自己</h2>
+          </div>
+        </div>
+        <div class="future-form">
+          <textarea id="future-message" rows="3" placeholder="写一句话给未来的自己。"></textarea>
+          <div class="future-controls">
+            <select id="future-days">
+              <option value="1">明天</option>
+              <option value="3">3 天后</option>
+              <option value="7" selected>7 天后</option>
+              <option value="14">14 天后</option>
+            </select>
+            <button id="save-future" class="secondary-button" type="button">保存</button>
+          </div>
+        </div>
+        <div id="future-list" class="future-list"></div>
+      </section>
+      <section class="section card privacy-panel">
+        <div class="mailbox-title-row">
+          <div>
+            <p class="section-kicker">Private</p>
+            <h2>私密锁</h2>
+          </div>
+        </div>
+        <div class="privacy-lock-form">
+          <input id="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="设置 4 位 PIN">
+          <button id="save-pin" class="secondary-button" type="button">设置</button>
+          <button id="clear-pin" class="ghost-button" type="button">关闭</button>
+        </div>
+        <p id="privacy-status" class="privacy-lock-status"></p>
+      </section>
+      <section class="section card mailbox-panel">
+        <div class="mailbox-title-row">
+          <div>
+            <p class="section-kicker">Letters</p>
+            <h2>心情信箱</h2>
+          </div>
+          <button id="clear-mailbox" class="ghost-button" type="button">清空</button>
+        </div>
+        <div id="mailbox-list" class="mailbox-list"></div>
       </section>
     </main>
     <footer class="footer-note">AI 结果仅供参考，不替代专业心理咨询或医疗建议。</footer>

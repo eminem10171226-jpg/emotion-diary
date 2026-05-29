@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI 情绪日记 - 趋势分析</title>
+  <meta name="theme-color" content="#e85a7a">
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+  <link rel="apple-touch-icon" href="/static/icon.svg">
   <link rel="stylesheet" href="/static/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -12,25 +16,56 @@
   <div class="container">
     <header>
       <h1>AI 情绪日记</h1>
-      <p class="subtitle">从趋势和关键词看见情绪的长期变化</p>
+      <p class="subtitle">从心情天气和趋势曲线看见情绪的长期变化</p>
       <div class="top-bar">
         <nav>
           <a href="/">分析</a>
           <a href="/history">历史记录</a>
           <a class="active" href="/trends">趋势分析</a>
+          <a href="/kit">急救包</a>
         </nav>
       </div>
     </header>
     <main>
-      <section class="section card">
-        <h2>情绪趋势（近 7 天）</h2>
-        <div class="chart-wrap">
-          <canvas id="trend-chart"></canvas>
+      <section class="section card weather-panel">
+        <div class="weather-title-row">
+          <div>
+            <p class="section-kicker">Mood Weather</p>
+            <h2>心情天气</h2>
+          </div>
         </div>
+        <div id="mood-weather" class="mood-weather"></div>
       </section>
-      <section class="section card">
-        <h3>高频关键词（近 14 天）</h3>
-        <div id="keywords" class="keywords"></div>
+      <section class="section card trend-panel">
+        <div class="trend-title-row">
+          <div>
+            <p class="section-kicker">Mood Flow</p>
+            <h2>情绪趋势（近 7 天）</h2>
+          </div>
+          <span class="trend-period">7 days</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="trend-chart" role="img" aria-label="最近 7 天情绪分数折线图"></canvas>
+        </div>
+        <div id="trend-summary" class="trend-summary" aria-live="polite"></div>
+      </section>
+      <section class="section card mood-map-panel">
+        <div class="trend-title-row">
+          <div>
+            <p class="section-kicker">Mood Map</p>
+            <h2>情绪地图</h2>
+          </div>
+        </div>
+        <div id="mood-map" class="mood-map"></div>
+      </section>
+      <section class="section card weekly-report-panel">
+        <div class="trend-title-row">
+          <div>
+            <p class="section-kicker">Weekly Review</p>
+            <h2>情绪复盘周报</h2>
+          </div>
+        </div>
+        <div id="weekly-report" class="weekly-report"></div>
       </section>
     </main>
     <footer class="footer-note">AI 结果仅供参考，不替代专业心理咨询或医疗建议。</footer>

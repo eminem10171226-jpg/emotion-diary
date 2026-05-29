@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from flask import Flask, render_template, request, jsonify, g
+from flask import Flask, render_template, request, jsonify, g, send_from_directory
 
 from ai_client import PERSONAS, analyze_diary
 from models import (
@@ -68,6 +68,19 @@ def trends_page():
     return render_template("trends.html")
 
 
+@app.route("/kit")
+def kit_page():
+    return render_template("kit.html")
+
+
+@app.route("/service-worker.js")
+def service_worker():
+    response = send_from_directory(app.static_folder, "service-worker.js")
+    response.headers["Service-Worker-Allowed"] = "/"
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 @app.route("/api/analyze", methods=["POST"])
 def api_analyze():
     data = request.get_json() or {}
@@ -113,11 +126,8 @@ def api_entries():
 def api_trend():
     sid = g.session_id
     trend = get_weekly_emotion_trend(sid, days=7)
-    kw = get_recent_keywords(sid, days=14)
-    items = sorted(kw.items(), key=lambda x: x[1], reverse=True)[:20]
     return jsonify({
         "trend": [{"date": str(d), "score": s} for d, s in trend],
-        "keywords": [{"word": k, "count": v} for k, v in items],
     })
 
 

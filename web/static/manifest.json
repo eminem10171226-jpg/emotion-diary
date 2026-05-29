@@ -3,10 +3,26 @@
   "short_name": "EmotionDiary",
   "description": "AI-powered emotion diary with analysis and trends",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#fff5f7",
   "theme_color": "#e85a7a",
   "orientation": "portrait",
+  "categories": ["health", "lifestyle", "productivity"],
+  "shortcuts": [
+    {
+      "name": "写日记",
+      "short_name": "分析",
+      "url": "/",
+      "description": "记录并分析今日心情"
+    },
+    {
+      "name": "心情急救包",
+      "short_name": "急救包",
+      "url": "/kit",
+      "description": "打开呼吸和接地练习"
+    }
+  ],
   "icons": [
     {
       "src": "/static/icon.svg",
