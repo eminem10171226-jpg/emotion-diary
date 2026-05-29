@@ -409,8 +409,20 @@
     recognition.interimResults = true;
     recognition.lang = getLanguage() === "en" ? "en-US" : "zh-CN";
     let listening = false;
+    let voiceBaseText = "";
+    let finalTranscript = "";
+
+    function mergeVoiceText(baseText, spokenText) {
+      const base = (baseText || "").trimEnd();
+      const spoken = (spokenText || "").trim();
+      if (!spoken) return base;
+      return base ? base + "\n" + spoken : spoken;
+    }
+
     recognition.onstart = function () {
       listening = true;
+      voiceBaseText = diary.value || "";
+      finalTranscript = "";
       voiceDiaryBtn.textContent = "正在听";
     };
     recognition.onend = function () {
@@ -418,19 +430,32 @@
       voiceDiaryBtn.textContent = "语音输入";
     };
     recognition.onresult = function (event) {
-      let transcript = "";
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        transcript += event.results[i][0].transcript;
+      const finalParts = [];
+      const interimParts = [];
+      for (let i = 0; i < event.results.length; i += 1) {
+        const text = event.results[i][0].transcript || "";
+        if (event.results[i].isFinal) {
+          finalParts.push(text);
+        } else {
+          interimParts.push(text);
+        }
       }
-      if (transcript) {
-        diary.value = (diary.value ? diary.value + "\n" : "") + transcript.trim();
+      finalTranscript = finalParts.join(" ").trim();
+      const interimTranscript = interimParts.join(" ").trim();
+      const spokenText = (finalTranscript + " " + interimTranscript).trim();
+      if (spokenText) {
+        diary.value = mergeVoiceText(voiceBaseText, spokenText);
         updateDraftCount();
       }
+    };
+    recognition.onerror = function () {
+      voiceDiaryBtn.textContent = "语音输入";
     };
     voiceDiaryBtn.addEventListener("click", function () {
       if (listening) recognition.stop();
       else {
         try {
+          recognition.lang = getLanguage() === "en" ? "en-US" : "zh-CN";
           recognition.start();
         } catch (_e) {
           voiceDiaryBtn.textContent = "语音输入";
