@@ -1,4 +1,4 @@
-const CACHE_NAME = "emotion-diary-v1";
+const CACHE_NAME = "emotion-diary-v2";
 const APP_SHELL = [
   "/",
   "/history",
@@ -6,7 +6,11 @@ const APP_SHELL = [
   "/kit",
   "/static/style.css",
   "/static/app.js",
-  "/static/icon.svg",
+  "/static/favicon-32.png",
+  "/static/apple-touch-icon.png",
+  "/static/icon-192.png",
+  "/static/icon-512.png",
+  "/static/icon-maskable-512.png",
   "/static/manifest.json",
 ];
 
