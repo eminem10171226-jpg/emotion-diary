@@ -138,16 +138,16 @@
   }
 
   function moodWeatherForScore(score) {
-    if (score >= 82) {
+    if (score >= 80) {
       return { mark: "晴", name: "晴朗", detail: "能量比较舒展，适合把好状态轻轻延长一点。", className: "sunny" };
     }
-    if (score >= 66) {
+    if (score >= 65) {
       return { mark: "云", name: "薄云", detail: "整体稳定，给自己留一点慢下来的空间会更舒服。", className: "cloudy" };
     }
-    if (score >= 48) {
+    if (score >= 50) {
       return { mark: "雾", name: "微雾", detail: "感受有些混杂，先照顾当下最具体的一件小事。", className: "misty" };
     }
-    if (score >= 28) {
+    if (score >= 25) {
       return { mark: "雨", name: "小雨", detail: "今天可能有些低落，适合降低要求，做一点温和的恢复。", className: "rainy" };
     }
     return { mark: "雷", name: "风暴", detail: "情绪负荷较重，请优先联系可信任的人，或者寻求专业支持。", className: "stormy" };
@@ -173,7 +173,7 @@
       "做一件能让明天轻松一点的小事。",
       "给一个喜欢的人发一句轻松的问候。",
     ];
-    const pool = score >= 72 ? high : score >= 45 ? mid : low;
+    const pool = score >= 80 ? high : score >= 50 ? mid : low;
     return pickFrom(pool, emotion + summary + todayKey());
   }
 
@@ -191,10 +191,10 @@
   function buildSelfLetter(data, score) {
     const emotion = data.emotion || "此刻的心情";
     const summary = data.summary || "你已经认真看见了自己的感受";
-    if (score >= 72) {
+    if (score >= 80) {
       return "亲爱的自己，今天的你带着" + emotion + "往前走了一段。记得把这份轻盈保存下来，不必用力证明什么。";
     }
-    if (score >= 45) {
+    if (score >= 50) {
       return "亲爱的自己，今天的情绪并不单一。你愿意停下来记录，已经是在给自己一个稳定的回应。";
     }
     return "亲爱的自己，今天可能不容易。" + summary + "。请先把要求放低一点，你值得被温柔地接住。";
@@ -892,9 +892,9 @@
     ].join(" ").toLowerCase();
 
     if (q && text.indexOf(q) === -1) return false;
-    if (scoreMode === "high" && score < 70) return false;
-    if (scoreMode === "mid" && (score < 40 || score >= 70)) return false;
-    if (scoreMode === "low" && score >= 40) return false;
+    if (scoreMode === "high" && score < 80) return false;
+    if (scoreMode === "mid" && (score < 50 || score >= 80)) return false;
+    if (scoreMode === "low" && score >= 50) return false;
     return true;
   }
 
@@ -941,8 +941,8 @@
   }
 
   function trendTone(score) {
-    if (score >= 72) return { point: "#15b79e", soft: "rgba(21, 183, 158, 0.15)", label: "状态舒展" };
-    if (score >= 45) return { point: "#5b7cfa", soft: "rgba(91, 124, 250, 0.14)", label: "状态平稳" };
+    if (score >= 80) return { point: "#15b79e", soft: "rgba(21, 183, 158, 0.15)", label: "状态舒展" };
+    if (score >= 50) return { point: "#5b7cfa", soft: "rgba(91, 124, 250, 0.14)", label: "状态平稳" };
     return { point: "#f0627f", soft: "rgba(240, 98, 127, 0.16)", label: "需要照顾" };
   }
 

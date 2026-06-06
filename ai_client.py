@@ -46,11 +46,161 @@ PERSONAS: List[Persona] = [
 ]
 
 
+NEGATIVE_EMOTION_KEYWORDS = (
+    "angry",
+    "anger",
+    "sad",
+    "sorrow",
+    "grief",
+    "depressed",
+    "depression",
+    "anxious",
+    "anxiety",
+    "worried",
+    "fear",
+    "afraid",
+    "panic",
+    "stress",
+    "stressed",
+    "lonely",
+    "frustrated",
+    "disappointed",
+    "guilty",
+    "ashamed",
+    "irritated",
+    "annoyed",
+    "tired",
+    "exhausted",
+    "upset",
+    "生气",
+    "愤怒",
+    "伤心",
+    "难过",
+    "悲伤",
+    "沮丧",
+    "抑郁",
+    "焦虑",
+    "担心",
+    "害怕",
+    "恐惧",
+    "惊恐",
+    "崩溃",
+    "低落",
+    "痛苦",
+    "压力",
+    "紧张",
+    "孤独",
+    "委屈",
+    "烦躁",
+    "失望",
+    "内疚",
+    "羞耻",
+    "厌烦",
+    "疲惫",
+    "不安",
+)
+
+POSITIVE_EMOTION_KEYWORDS = (
+    "happy",
+    "joy",
+    "joyful",
+    "glad",
+    "excited",
+    "delighted",
+    "cheerful",
+    "grateful",
+    "optimistic",
+    "hopeful",
+    "proud",
+    "satisfied",
+    "love",
+    "loved",
+    "开心",
+    "高兴",
+    "快乐",
+    "愉快",
+    "喜悦",
+    "兴奋",
+    "幸福",
+    "满足",
+    "感激",
+    "感恩",
+    "乐观",
+    "希望",
+    "期待",
+    "自信",
+    "骄傲",
+    "甜蜜",
+)
+
+MIXED_OR_NEUTRAL_EMOTION_KEYWORDS = (
+    "mixed",
+    "complex",
+    "neutral",
+    "calm",
+    "peaceful",
+    "numb",
+    "normal",
+    "ordinary",
+    "混合",
+    "复杂",
+    "矛盾",
+    "平静",
+    "平和",
+    "中性",
+    "麻木",
+    "普通",
+    "一般",
+)
+
+
 def get_persona_by_name(name: str) -> Persona:
     for p in PERSONAS:
         if p.name == name:
             return p
     return PERSONAS[0]
+
+
+def _coerce_score(value: Any, default: int = 60) -> int:
+    try:
+        score = round(float(value))
+    except (TypeError, ValueError):
+        score = default
+    return max(0, min(100, int(score)))
+
+
+def _has_any_keyword(text: str, keywords: tuple[str, ...]) -> bool:
+    folded = text.casefold()
+    return any(keyword.casefold() in folded for keyword in keywords)
+
+
+def _negative_score_from_intensity(score: int) -> int:
+    if score < 50:
+        return score
+    return max(12, min(49, 49 - round((score - 50) * 0.7)))
+
+
+def _normalize_emotion_score(parsed: Dict[str, Any]) -> None:
+    emotion_text = str(parsed.get("emotion") or "")
+    score = _coerce_score(parsed.get("emotion_score"))
+
+    has_negative = _has_any_keyword(emotion_text, NEGATIVE_EMOTION_KEYWORDS)
+    has_positive = _has_any_keyword(emotion_text, POSITIVE_EMOTION_KEYWORDS)
+    is_mixed_or_neutral = _has_any_keyword(
+        emotion_text,
+        MIXED_OR_NEUTRAL_EMOTION_KEYWORDS,
+    )
+
+    if has_negative and not has_positive:
+        score = _negative_score_from_intensity(score)
+    elif has_positive and not has_negative:
+        score = max(80, score)
+    elif is_mixed_or_neutral or (has_positive and has_negative):
+        score = max(50, min(79, score))
+    else:
+        score = max(50, min(79, score))
+
+    parsed["emotion_score"] = score
 
 
 def analyze_diary(
@@ -88,7 +238,10 @@ def analyze_diary(
         "The user will provide one diary entry (may contain emoji). "
         "Please: "
         "1) Identify the main emotion (e.g. happy, sad, depressed, anxious, angry, calm, mixed, etc.); "
-        "2) Give an emotion intensity score from 0-100; "
+        "2) Give an emotion score from 0-100 based on emotional valence and well-being, not raw intensity. "
+        "Negative emotions such as anger, sadness, anxiety, depression, fear, frustration, and stress must be below 50. "
+        "Clearly positive emotions such as happiness, joy, excitement, gratitude, hope, and confidence must be 80 or above. "
+        "Neutral, calm, mixed, or ambiguous emotions should usually be between 50 and 79. "
         "3) Summarize the current psychological state in 1-3 short sentences; "
         "4) Provide 2-4 concrete, actionable suggestions for daily life or mental health; "
         "5) Recommend 2-4 suitable music styles; "
@@ -182,6 +335,7 @@ def analyze_diary(
     parsed.setdefault("food_suggestions", [])
     parsed.setdefault("keywords", {})
     parsed.setdefault("notifications", [])
+    _normalize_emotion_score(parsed)
 
     return parsed
 
