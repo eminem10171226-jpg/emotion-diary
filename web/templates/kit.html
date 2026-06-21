@@ -61,10 +61,36 @@
     <footer class="footer-note" data-i18n="footerNote">AI 结果仅供参考，不替代专业心理咨询或医疗建议。</footer>
   </div>
   <nav class="bottom-nav" aria-label="页面导航">
-    <a href="/"><span data-i18n="navAnalyze">分析</span></a>
-    <a href="/history"><span data-i18n="navHistory">历史记录</span></a>
-    <a href="/trends"><span data-i18n="navTrends">趋势分析</span></a>
-    <a class="active" href="/kit" aria-current="page"><span data-i18n="navKit">急救包</span></a>
+    <a href="/">
+      <svg class="nav-icon nav-icon-home" viewBox="0 0 24 24" aria-hidden="true">
+        <path class="nav-fill" d="M3.5 10.7 12 3.3l8.5 7.4v8.1a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-8.1Z"/>
+        <path class="nav-detail" d="M8.2 11.5h7.6M8.2 15h5.1"/>
+      </svg>
+      <span class="nav-label" data-i18n="navAnalyze">分析</span>
+    </a>
+    <a href="/history">
+      <svg class="nav-icon nav-icon-history" viewBox="0 0 24 24" aria-hidden="true">
+        <path class="nav-line" d="M4.4 12a7.6 7.6 0 1 0 2.2-5.4"/>
+        <path class="nav-line" d="M4.2 4.9v4.2h4.2M12 7.8v4.7l3 1.8"/>
+      </svg>
+      <span class="nav-label" data-i18n="navHistory">历史记录</span>
+    </a>
+    <a href="/trends">
+      <svg class="nav-icon nav-icon-trends" viewBox="0 0 24 24" aria-hidden="true">
+        <path class="nav-line" d="M4 18.5h16"/>
+        <path class="nav-line" d="M5.2 15.6 9 11.8l3.2 2.9 5.9-7.1"/>
+        <path class="nav-dot" d="M9 11.8h.01M12.2 14.7h.01M18.1 7.6h.01"/>
+      </svg>
+      <span class="nav-label" data-i18n="navTrends">趋势分析</span>
+    </a>
+    <a class="active" href="/kit" aria-current="page">
+      <svg class="nav-icon nav-icon-kit" viewBox="0 0 24 24" aria-hidden="true">
+        <path class="nav-line" d="M8.3 7.1V5.8a2 2 0 0 1 2-2h3.4a2 2 0 0 1 2 2v1.3"/>
+        <path class="nav-line" d="M5.4 7.2h13.2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5.4a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z"/>
+        <path class="nav-line" d="M12 10.4v6.4M8.8 13.6h6.4"/>
+      </svg>
+      <span class="nav-label" data-i18n="navKit">急救包</span>
+    </a>
   </nav>
   <script src="/static/app.js"></script>
 </body>
