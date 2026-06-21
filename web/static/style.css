@@ -723,6 +723,12 @@ h2, h3 {
   margin-top: 0.62rem;
 }
 
+.mailbox-title-row #clear-mailbox {
+  width: auto;
+  min-width: 4.8rem;
+  padding-inline: 1rem;
+}
+
 .mailbox-list {
   display: flex;
   flex-direction: column;
@@ -1520,6 +1526,12 @@ h2, h3 {
 
   .ghost-button {
     width: 100%;
+  }
+
+  .mailbox-title-row #clear-mailbox {
+    width: auto;
+    min-width: 4.8rem;
+    flex: 0 0 auto;
   }
 
   #analyze {
