@@ -38,6 +38,7 @@
   const hasHistoryPage = !!historyList;
   const hasTrendPage = !!trendCanvas;
   const ACTIVE_ANALYSIS_KEY = "emotionDiary.activeAnalysis";
+  const UI_LANGUAGE_KEY = "emotionDiary.uiLanguage";
   const MOOD_MAILBOX_KEY = "emotionDiary.moodMailbox";
   const GENTLE_TASK_KEY = "emotionDiary.gentleTasks";
   const FUTURE_MESSAGES_KEY = "emotionDiary.futureMessages";
@@ -46,11 +47,256 @@
   const OFFLINE_DRAFTS_KEY = "emotionDiary.offlineDrafts";
   let cachedHistoryEntries = [];
 
+  const I18N = {
+    zh: {
+      appTitle: "AI 情绪日记",
+      homeSubtitle: "记录当下，温柔看见自己的情绪变化",
+      historySubtitle: "回看每一次记录，看到自己的变化轨迹",
+      trendsSubtitle: "从心情天气和趋势曲线看见情绪的长期变化",
+      kitSubtitle: "在情绪很重的时候，先把自己稳稳接住",
+      personaLabel: "人格风格",
+      uiLanguageLabel: "界面语言",
+      languageChinese: "中文",
+      languageEnglish: "English",
+      composeTitle: "记录今日感受",
+      diaryPlaceholder: "写下你今天的心情（支持 emoji）。",
+      privacyNote: "仅保存在你的当前会话",
+      voiceInput: "语音输入",
+      voiceListening: "正在听",
+      voiceUnsupported: "不支持语音",
+      startAnalysis: "开始分析",
+      ritualTitle: "情绪仪式",
+      futureTitle: "未来的自己",
+      futurePlaceholder: "写一句话给未来的自己。",
+      tomorrow: "明天",
+      after3Days: "3 天后",
+      after7Days: "7 天后",
+      after14Days: "14 天后",
+      save: "保存",
+      privacyLockTitle: "私密锁",
+      pinPlaceholder: "设置 4 位 PIN",
+      setPin: "设置",
+      closePin: "关闭",
+      mailboxTitle: "心情信箱",
+      clear: "清空",
+      footerNote: "AI 结果仅供参考，不替代专业心理咨询或医疗建议。",
+      navAnalyze: "分析",
+      navHistory: "历史记录",
+      navTrends: "趋势分析",
+      navKit: "急救包",
+      historyTitle: "历史记录",
+      historySearchPlaceholder: "搜索情绪、摘要、日期或分数",
+      scoreAll: "全部分数",
+      scoreHigh: "80 分以上",
+      scoreMid: "50-79 分",
+      scoreLow: "低于 50 分",
+      moodWeatherTitle: "心情天气",
+      trendTitle: "情绪趋势（近 7 天）",
+      trendChartLabel: "最近 7 天情绪分数折线图",
+      moodMapTitle: "情绪地图",
+      weeklyReportTitle: "情绪复盘周报",
+      kitTitle: "心情急救包",
+      kitIntro: "如果你现在很难受，先不用解决整个人生。只完成下面一个很小的步骤。",
+      breathingTitle: "呼吸练习",
+      start: "开始",
+      pause: "暂停",
+      inhale: "吸气",
+      hold: "停留",
+      exhale: "呼气",
+      breathGuide: "跟随圆形节奏，慢慢吸气、停留、呼气。",
+      inhaleGuide: "慢慢吸气 4 秒。",
+      holdGuide: "轻轻停留 2 秒。",
+      exhaleGuide: "缓慢呼气 6 秒。",
+      groundingTitle: "5-4-3-2-1 接地练习",
+      grounding5: "说出你看见的 5 个东西",
+      grounding4: "触摸你能感到的 4 个东西",
+      grounding3: "听见周围的 3 种声音",
+      grounding2: "闻到 2 种气味",
+      grounding1: "感受 1 个身体正在支撑你的地方",
+      supportTitle: "给可信任的人发一句话",
+      supportMessage: "我现在状态不太好，可能不需要你马上解决什么，但我想让你陪我说几句话。",
+      copySupport: "复制这句话",
+      copySuccess: "已复制，可以发给可信任的人。",
+      copyManual: "已选中文本，请手动复制。",
+      safetyTitle: "安全提醒",
+      safetyText: "如果你有伤害自己或他人的冲动，请立刻联系身边可信任的人、当地紧急服务，或前往最近的医院急诊。你不需要一个人撑过去。",
+      charUnit: "字",
+      writeContentFirst: "请先写一点内容再分析。",
+      offlineDraftSaved: "当前离线，日记已保存为草稿。网络恢复后可继续分析。",
+      analyzing: "分析中，请稍候...",
+      analysisFailed: "分析失败，请稍后重试。",
+      networkDraftSaved: "网络异常，已保存为离线草稿：",
+      emotionScore: "情绪分数",
+      endAnalysis: "结束此次分析",
+      todayMoodWeather: "今日心情天气：",
+      summaryTitle: "总结",
+      gentleTaskTitle: "今日温柔任务",
+      selfLetterTitle: "写给今天的自己",
+      saveToMailbox: "收藏到心情信箱",
+      adviceTitle: "建议",
+      musicTitle: "音乐建议",
+      foodTitle: "饮食建议",
+      musicCoverTitle: "音乐封面推荐",
+      foodImageTitle: "食物图片推荐",
+      noAdvice: "暂未生成建议",
+      noneText: "暂无",
+      noMedia: "暂无推荐图片。",
+    },
+    en: {
+      appTitle: "AI Emotion Diary",
+      homeSubtitle: "Record this moment and gently notice how your emotions move",
+      historySubtitle: "Review each entry and see your emotional path over time",
+      trendsSubtitle: "Use mood weather and trend lines to understand longer changes",
+      kitSubtitle: "When emotions feel heavy, steady yourself one small step at a time",
+      personaLabel: "Persona style",
+      uiLanguageLabel: "Interface language",
+      languageChinese: "中文",
+      languageEnglish: "English",
+      composeTitle: "Record today's feelings",
+      diaryPlaceholder: "Write down how you feel today. Emoji are welcome.",
+      privacyNote: "Saved only in your current session",
+      voiceInput: "Voice input",
+      voiceListening: "Listening",
+      voiceUnsupported: "Voice unavailable",
+      startAnalysis: "Start analysis",
+      ritualTitle: "Emotion ritual",
+      futureTitle: "Future me",
+      futurePlaceholder: "Write one sentence to your future self.",
+      tomorrow: "Tomorrow",
+      after3Days: "In 3 days",
+      after7Days: "In 7 days",
+      after14Days: "In 14 days",
+      save: "Save",
+      privacyLockTitle: "Private lock",
+      pinPlaceholder: "Set a 4-digit PIN",
+      setPin: "Set",
+      closePin: "Turn off",
+      mailboxTitle: "Mood mailbox",
+      clear: "Clear",
+      footerNote: "AI results are for reference only and do not replace professional counseling or medical advice.",
+      navAnalyze: "Analyze",
+      navHistory: "History",
+      navTrends: "Trends",
+      navKit: "First aid",
+      historyTitle: "History",
+      historySearchPlaceholder: "Search emotion, summary, date, or score",
+      scoreAll: "All scores",
+      scoreHigh: "80 and above",
+      scoreMid: "50-79",
+      scoreLow: "Below 50",
+      moodWeatherTitle: "Mood weather",
+      trendTitle: "Emotion trend (7 days)",
+      trendChartLabel: "Line chart of emotion scores from the last 7 days",
+      moodMapTitle: "Emotion map",
+      weeklyReportTitle: "Weekly emotion review",
+      kitTitle: "Mood first-aid kit",
+      kitIntro: "If you feel awful right now, you do not need to solve your whole life. Just complete one tiny step below.",
+      breathingTitle: "Breathing exercise",
+      start: "Start",
+      pause: "Pause",
+      inhale: "Inhale",
+      hold: "Hold",
+      exhale: "Exhale",
+      breathGuide: "Follow the circle: inhale, hold, and exhale slowly.",
+      inhaleGuide: "Inhale slowly for 4 seconds.",
+      holdGuide: "Hold gently for 2 seconds.",
+      exhaleGuide: "Exhale slowly for 6 seconds.",
+      groundingTitle: "5-4-3-2-1 grounding",
+      grounding5: "Name 5 things you can see",
+      grounding4: "Touch 4 things you can feel",
+      grounding3: "Notice 3 sounds around you",
+      grounding2: "Notice 2 smells",
+      grounding1: "Feel 1 place where your body is supported",
+      supportTitle: "Send one sentence to someone you trust",
+      supportMessage: "I'm not doing very well right now. I may not need you to fix anything, but I would like you to stay with me and talk for a bit.",
+      copySupport: "Copy this sentence",
+      copySuccess: "Copied. You can send it to someone you trust.",
+      copyManual: "Text selected. Please copy it manually.",
+      safetyTitle: "Safety reminder",
+      safetyText: "If you feel an urge to hurt yourself or someone else, contact someone you trust, local emergency services, or the nearest hospital emergency department immediately. You do not have to get through this alone.",
+      charUnit: "chars",
+      writeContentFirst: "Write a little first, then start the analysis.",
+      offlineDraftSaved: "You are offline. This diary entry has been saved as a draft.",
+      analyzing: "Analyzing, please wait...",
+      analysisFailed: "Analysis failed. Please try again later.",
+      networkDraftSaved: "Network error. Saved as an offline draft: ",
+      emotionScore: "Emotion score",
+      endAnalysis: "End this analysis",
+      todayMoodWeather: "Today's mood weather: ",
+      summaryTitle: "Summary",
+      gentleTaskTitle: "Gentle task today",
+      selfLetterTitle: "A note to today's self",
+      saveToMailbox: "Save to mood mailbox",
+      adviceTitle: "Suggestions",
+      musicTitle: "Music",
+      foodTitle: "Food",
+      musicCoverTitle: "Music covers",
+      foodImageTitle: "Food images",
+      noAdvice: "No suggestions yet",
+      noneText: "None",
+      noMedia: "No recommendation images yet.",
+    },
+  };
+
   function getPersona() {
-    return document.getElementById("persona").value;
+    const persona = document.getElementById("persona");
+    return persona ? persona.value : "";
   }
   function getLanguage() {
-    return document.getElementById("language").value;
+    const language = document.getElementById("language");
+    return language ? language.value : getStoredUiLanguage();
+  }
+
+  function getStoredUiLanguage() {
+    try {
+      const saved = localStorage.getItem(UI_LANGUAGE_KEY);
+      return saved === "en" ? "en" : "zh";
+    } catch (_e) {
+      return "zh";
+    }
+  }
+
+  function t(key) {
+    const lang = getStoredUiLanguage();
+    return (I18N[lang] && I18N[lang][key]) || I18N.zh[key] || key;
+  }
+
+  function applyInterfaceLanguage(lang) {
+    const normalized = lang === "en" ? "en" : "zh";
+    try {
+      localStorage.setItem(UI_LANGUAGE_KEY, normalized);
+    } catch (_e) {}
+    document.documentElement.lang = normalized === "en" ? "en" : "zh-CN";
+
+    const languageSelect = document.getElementById("language");
+    if (languageSelect) languageSelect.value = normalized;
+
+    document.querySelectorAll("[data-i18n]").forEach(function (node) {
+      node.textContent = t(node.dataset.i18n);
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(function (node) {
+      node.setAttribute("placeholder", t(node.dataset.i18nPlaceholder));
+    });
+    document.querySelectorAll("[data-i18n-aria-label]").forEach(function (node) {
+      node.setAttribute("aria-label", t(node.dataset.i18nAriaLabel));
+    });
+    document.querySelectorAll("[data-i18n-value]").forEach(function (node) {
+      if (node.value === "" || node.defaultValue === node.value) {
+        node.value = t(node.dataset.i18nValue);
+        node.defaultValue = node.value;
+      }
+    });
+    updateDraftCount();
+  }
+
+  function initInterfaceLanguage() {
+    applyInterfaceLanguage(getStoredUiLanguage());
+    const languageSelect = document.getElementById("language");
+    if (languageSelect) {
+      languageSelect.addEventListener("change", function () {
+        applyInterfaceLanguage(languageSelect.value);
+      });
+    }
   }
 
   function escapeHtml(value) {
@@ -111,7 +357,7 @@
   function updateDraftCount() {
     if (!draftCount || !diary) return;
     const count = (diary.value || "").trim().length;
-    draftCount.textContent = count + " 字";
+    draftCount.textContent = count + " " + t("charUnit");
   }
 
   function todayKey() {
@@ -401,7 +647,7 @@
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       voiceDiaryBtn.disabled = true;
-      voiceDiaryBtn.textContent = "不支持语音";
+      voiceDiaryBtn.textContent = t("voiceUnsupported");
       return;
     }
     const recognition = new SpeechRecognition();
@@ -423,11 +669,11 @@
       listening = true;
       voiceBaseText = diary.value || "";
       finalTranscript = "";
-      voiceDiaryBtn.textContent = "正在听";
+      voiceDiaryBtn.textContent = t("voiceListening");
     };
     recognition.onend = function () {
       listening = false;
-      voiceDiaryBtn.textContent = "语音输入";
+      voiceDiaryBtn.textContent = t("voiceInput");
     };
     recognition.onresult = function (event) {
       const finalParts = [];
@@ -449,7 +695,7 @@
       }
     };
     recognition.onerror = function () {
-      voiceDiaryBtn.textContent = "语音输入";
+      voiceDiaryBtn.textContent = t("voiceInput");
     };
     voiceDiaryBtn.addEventListener("click", function () {
       if (listening) recognition.stop();
@@ -458,7 +704,7 @@
           recognition.lang = getLanguage() === "en" ? "en-US" : "zh-CN";
           recognition.start();
         } catch (_e) {
-          voiceDiaryBtn.textContent = "语音输入";
+          voiceDiaryBtn.textContent = t("voiceInput");
         }
       }
     });
@@ -537,7 +783,7 @@
 
   async function buildMediaCards(items, kind) {
     const validItems = items.filter(function (x) { return !!x; }).slice(0, 4);
-    if (!validItems.length) return "<p class='media-empty'>暂无推荐图片。</p>";
+    if (!validItems.length) return "<p class='media-empty'>" + t("noMedia") + "</p>";
 
     if (kind === "music") {
       const covers = await Promise.all(validItems.map(fetchMusicCover));
@@ -587,9 +833,10 @@
 
     const adviceHtml = advice.length
       ? advice.map(function (item) { return "<li>" + escapeHtml(item) + "</li>"; }).join("")
-      : "<li>暂未生成建议</li>";
-    const musicText = music.length ? music.map(escapeHtml).join("、") : "暂无";
-    const foodText = food.length ? food.map(escapeHtml).join("、") : "暂无";
+      : "<li>" + t("noAdvice") + "</li>";
+    const separator = getLanguage() === "en" ? ", " : "、";
+    const musicText = music.length ? music.map(escapeHtml).join(separator) : t("noneText");
+    const foodText = food.length ? food.map(escapeHtml).join(separator) : t("noneText");
     const musicCards = await buildMediaCards(music, "music");
     const foodCards = await buildMediaCards(food, "food");
 
@@ -598,41 +845,43 @@
       "<div class='analysis-toolbar'>" +
       "<div class='analysis-header'>" +
       "<span class='emotion-chip'>" + escapeHtml(emotion) + "</span>" +
-      "<span class='score-chip'>情绪分数 " + formatScore(score) + "/100</span>" +
+      "<span class='score-chip'>" + t("emotionScore") + " " + formatScore(score) + "/100</span>" +
       "</div>" +
-      "<button type='button' class='ghost-button' data-clear-analysis>结束此次分析</button>" +
+      "<button type='button' class='ghost-button' data-clear-analysis>" + t("endAnalysis") + "</button>" +
       "</div>" +
       "<div class='score-meter' aria-hidden='true'><span style='width:" + formatScore(score) + "%'></span></div>" +
       "<div class='mood-mini-weather " + weather.className + "'>" +
       "<span class='weather-mark'>" + weather.mark + "</span>" +
-      "<div><strong>今日心情天气：" + weather.name + "</strong><p>" + weather.detail + "</p></div>" +
+      "<div><strong>" + t("todayMoodWeather") + weather.name + "</strong><p>" + weather.detail + "</p></div>" +
       "</div>" +
-      "<div class='analysis-block analysis-summary'><h4>总结</h4><p>" + escapeHtml(summary) + "</p></div>" +
+      "<div class='analysis-block analysis-summary'><h4>" + t("summaryTitle") + "</h4><p>" + escapeHtml(summary) + "</p></div>" +
       "<div class='gentle-task-card'>" +
       "<label>" +
       "<input type='checkbox' data-gentle-task=\"" + escapeHtml(gentleTask) + "\"" + (taskDone ? " checked" : "") + ">" +
-      "<span><strong>今日温柔任务</strong>" + escapeHtml(gentleTask) + "</span>" +
+      "<span><strong>" + t("gentleTaskTitle") + "</strong>" + escapeHtml(gentleTask) + "</span>" +
       "</label>" +
       "</div>" +
       "<div class='self-letter-card'>" +
-      "<h4>写给今天的自己</h4>" +
+      "<h4>" + t("selfLetterTitle") + "</h4>" +
       "<p>" + escapeHtml(letter) + "</p>" +
-      "<button type='button' class='ghost-button' data-save-letter=\"" + escapeHtml(letter) + "\">收藏到心情信箱</button>" +
+      "<button type='button' class='ghost-button' data-save-letter=\"" + escapeHtml(letter) + "\">" + t("saveToMailbox") + "</button>" +
       "</div>" +
-      "<div class='analysis-block'><h4>建议</h4><ul>" + adviceHtml + "</ul></div>" +
+      "<div class='analysis-block'><h4>" + t("adviceTitle") + "</h4><ul>" + adviceHtml + "</ul></div>" +
       "<div class='analysis-grid'>" +
-      "<div><h4>音乐建议</h4><p>" + musicText + "</p></div>" +
-      "<div><h4>饮食建议</h4><p>" + foodText + "</p></div>" +
+      "<div><h4>" + t("musicTitle") + "</h4><p>" + musicText + "</p></div>" +
+      "<div><h4>" + t("foodTitle") + "</h4><p>" + foodText + "</p></div>" +
       "</div>" +
       "<div class='analysis-media'>" +
-      "<h4>音乐封面推荐</h4>" +
+      "<h4>" + t("musicCoverTitle") + "</h4>" +
       "<div class='media-grid'>" + musicCards + "</div>" +
-      "<h4>食物图片推荐</h4>" +
+      "<h4>" + t("foodImageTitle") + "</h4>" +
       "<div class='media-grid'>" + foodCards + "</div>" +
       "</div>" +
       "</div>"
     );
   }
+
+  initInterfaceLanguage();
 
   if (hasAnalyzePage) {
     restoreActiveAnalysis();
@@ -719,19 +968,19 @@
     analyzeBtn.addEventListener("click", async function () {
     const content = (diary.value || "").trim();
     if (!content) {
-      showError("请先写一点内容再分析。");
+      showError(t("writeContentFirst"));
       return;
     }
     if (!navigator.onLine) {
       saveOfflineDraft(content);
-      showError("当前离线，日记已保存为草稿。网络恢复后可继续分析。");
+      showError(t("offlineDraftSaved"));
       return;
     }
     analyzeBtn.disabled = true;
     analyzeBtn.classList.add("is-loading");
     errorEl.classList.add("hidden");
     resultEl.classList.remove("hidden");
-    resultEl.innerHTML = "<div class='analysis-loading'>分析中，请稍候...</div>";
+    resultEl.innerHTML = "<div class='analysis-loading'>" + t("analyzing") + "</div>";
 
     try {
       const res = await fetch("/api/analyze", {
@@ -745,7 +994,7 @@
       });
       const data = await res.json();
       if (!res.ok) {
-        showError(data.error || "分析失败，请稍后重试。");
+        showError(data.error || t("analysisFailed"));
         return;
       }
       const cardHtml = await renderResultCard(data);
@@ -755,7 +1004,7 @@
       updateDraftCount();
     } catch (e) {
       saveOfflineDraft(content);
-      showError("网络异常，已保存为离线草稿：" + e.message);
+      showError(t("networkDraftSaved") + e.message);
     } finally {
       analyzeBtn.disabled = false;
       analyzeBtn.classList.remove("is-loading");
@@ -1297,45 +1546,41 @@
       let timer = null;
       let step = 0;
       const steps = [
-        { label: "吸气", className: "inhale" },
-        { label: "停留", className: "hold" },
-        { label: "呼气", className: "exhale" },
+        { labelKey: "inhale", guideKey: "inhaleGuide", className: "inhale" },
+        { labelKey: "hold", guideKey: "holdGuide", className: "hold" },
+        { labelKey: "exhale", guideKey: "exhaleGuide", className: "exhale" },
       ];
       function renderBreathStep() {
         const current = steps[step % steps.length];
-        breathOrb.textContent = current.label;
+        breathOrb.textContent = t(current.labelKey);
         breathOrb.className = "breath-orb " + current.className;
-        breathLabel.textContent = current.label === "吸气"
-          ? "慢慢吸气 4 秒。"
-          : current.label === "停留"
-            ? "轻轻停留 2 秒。"
-            : "缓慢呼气 6 秒。";
+        breathLabel.textContent = t(current.guideKey);
         step += 1;
       }
       breathToggle.addEventListener("click", function () {
         if (timer) {
           clearInterval(timer);
           timer = null;
-          breathToggle.textContent = "开始";
+          breathToggle.textContent = t("start");
           breathOrb.className = "breath-orb";
-          breathOrb.textContent = "吸气";
-          breathLabel.textContent = "跟随圆形节奏，慢慢吸气、停留、呼气。";
+          breathOrb.textContent = t("inhale");
+          breathLabel.textContent = t("breathGuide");
           return;
         }
         step = 0;
         renderBreathStep();
         timer = setInterval(renderBreathStep, 4200);
-        breathToggle.textContent = "暂停";
+        breathToggle.textContent = t("pause");
       });
     }
     if (copySupportBtn && supportMessage) {
       copySupportBtn.addEventListener("click", async function () {
         try {
           await navigator.clipboard.writeText(supportMessage.value || "");
-          if (copyStatus) copyStatus.textContent = "已复制，可以发给可信任的人。";
+          if (copyStatus) copyStatus.textContent = t("copySuccess");
         } catch (_e) {
           supportMessage.select();
-          if (copyStatus) copyStatus.textContent = "已选中文本，请手动复制。";
+          if (copyStatus) copyStatus.textContent = t("copyManual");
         }
       });
     }

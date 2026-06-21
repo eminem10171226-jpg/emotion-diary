@@ -18,46 +18,43 @@
   <div class="bg-glow"></div>
   <div class="container">
     <header>
-      <h1>AI 情绪日记</h1>
-      <p class="subtitle">记录当下，温柔看见自己的情绪变化</p>
-      <div class="top-bar">
-        <label>人格风格</label>
-        <select id="persona">
-          {% for name in personas %}
-          <option value="{{ name }}">{{ name }}</option>
-          {% endfor %}
-        </select>
-        <label>回答语言</label>
-        <select id="language">
-          <option value="auto">自动</option>
-          <option value="zh">中文</option>
-          <option value="en">English</option>
-        </select>
-        <nav>
-          <a class="active" href="/">分析</a>
-          <a href="/history">历史记录</a>
-          <a href="/trends">趋势分析</a>
-          <a href="/kit">急救包</a>
-        </nav>
-      </div>
+      <h1 data-i18n="appTitle">AI 情绪日记</h1>
+      <p class="subtitle" data-i18n="homeSubtitle">记录当下，温柔看见自己的情绪变化</p>
     </header>
 
     <main>
+      <section class="settings-strip" aria-label="偏好设置">
+        <label class="setting-field">
+          <span data-i18n="personaLabel">人格风格</span>
+          <select id="persona">
+            {% for name in personas %}
+            <option value="{{ name }}">{{ name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="setting-field">
+          <span data-i18n="uiLanguageLabel">界面语言</span>
+          <select id="language">
+            <option value="zh" selected data-i18n="languageChinese">中文</option>
+            <option value="en" data-i18n="languageEnglish">English</option>
+          </select>
+        </label>
+      </section>
       <section class="diary-section card composer-card">
         <div class="composer-head">
           <div>
             <p class="section-kicker">Today</p>
-            <h2>记录今日感受</h2>
+            <h2 data-i18n="composeTitle">记录今日感受</h2>
           </div>
           <span id="draft-count" class="draft-count">0 字</span>
         </div>
         <div class="textarea-shell">
-          <textarea id="diary" rows="6" placeholder="写下你今天的心情（支持 emoji）。"></textarea>
+          <textarea id="diary" rows="6" placeholder="写下你今天的心情（支持 emoji）。" data-i18n-placeholder="diaryPlaceholder"></textarea>
         </div>
         <div class="action-row composer-actions">
-          <span class="privacy-note">仅保存在你的当前会话</span>
-          <button id="voice-diary" class="secondary-button" type="button">语音输入</button>
-          <button id="analyze">开始分析</button>
+          <span class="privacy-note" data-i18n="privacyNote">仅保存在你的当前会话</span>
+          <button id="voice-diary" class="secondary-button" type="button" data-i18n="voiceInput">语音输入</button>
+          <button id="analyze" data-i18n="startAnalysis">开始分析</button>
         </div>
         <div id="offline-drafts" class="offline-drafts hidden"></div>
         <div id="analysis-result" class="result-box hidden result-pretty"></div>
@@ -67,7 +64,7 @@
         <div class="mailbox-title-row">
           <div>
             <p class="section-kicker">Ritual</p>
-            <h2>情绪仪式</h2>
+            <h2 data-i18n="ritualTitle">情绪仪式</h2>
           </div>
         </div>
         <div id="ritual-actions" class="ritual-actions"></div>
@@ -76,19 +73,19 @@
         <div class="mailbox-title-row">
           <div>
             <p class="section-kicker">Future Me</p>
-            <h2>未来的自己</h2>
+            <h2 data-i18n="futureTitle">未来的自己</h2>
           </div>
         </div>
         <div class="future-form">
-          <textarea id="future-message" rows="3" placeholder="写一句话给未来的自己。"></textarea>
+          <textarea id="future-message" rows="3" placeholder="写一句话给未来的自己。" data-i18n-placeholder="futurePlaceholder"></textarea>
           <div class="future-controls">
             <select id="future-days">
-              <option value="1">明天</option>
-              <option value="3">3 天后</option>
-              <option value="7" selected>7 天后</option>
-              <option value="14">14 天后</option>
+              <option value="1" data-i18n="tomorrow">明天</option>
+              <option value="3" data-i18n="after3Days">3 天后</option>
+              <option value="7" selected data-i18n="after7Days">7 天后</option>
+              <option value="14" data-i18n="after14Days">14 天后</option>
             </select>
-            <button id="save-future" class="secondary-button" type="button">保存</button>
+            <button id="save-future" class="secondary-button" type="button" data-i18n="save">保存</button>
           </div>
         </div>
         <div id="future-list" class="future-list"></div>
@@ -97,13 +94,13 @@
         <div class="mailbox-title-row">
           <div>
             <p class="section-kicker">Private</p>
-            <h2>私密锁</h2>
+            <h2 data-i18n="privacyLockTitle">私密锁</h2>
           </div>
         </div>
         <div class="privacy-lock-form">
-          <input id="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="设置 4 位 PIN">
-          <button id="save-pin" class="secondary-button" type="button">设置</button>
-          <button id="clear-pin" class="ghost-button" type="button">关闭</button>
+          <input id="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="设置 4 位 PIN" data-i18n-placeholder="pinPlaceholder">
+          <button id="save-pin" class="secondary-button" type="button" data-i18n="setPin">设置</button>
+          <button id="clear-pin" class="ghost-button" type="button" data-i18n="closePin">关闭</button>
         </div>
         <p id="privacy-status" class="privacy-lock-status"></p>
       </section>
@@ -111,15 +108,21 @@
         <div class="mailbox-title-row">
           <div>
             <p class="section-kicker">Letters</p>
-            <h2>心情信箱</h2>
+            <h2 data-i18n="mailboxTitle">心情信箱</h2>
           </div>
-          <button id="clear-mailbox" class="ghost-button" type="button">清空</button>
+          <button id="clear-mailbox" class="ghost-button" type="button" data-i18n="clear">清空</button>
         </div>
         <div id="mailbox-list" class="mailbox-list"></div>
       </section>
     </main>
-    <footer class="footer-note">AI 结果仅供参考，不替代专业心理咨询或医疗建议。</footer>
+    <footer class="footer-note" data-i18n="footerNote">AI 结果仅供参考，不替代专业心理咨询或医疗建议。</footer>
   </div>
+  <nav class="bottom-nav" aria-label="页面导航">
+    <a class="active" href="/" aria-current="page"><span data-i18n="navAnalyze">分析</span></a>
+    <a href="/history"><span data-i18n="navHistory">历史记录</span></a>
+    <a href="/trends"><span data-i18n="navTrends">趋势分析</span></a>
+    <a href="/kit"><span data-i18n="navKit">急救包</span></a>
+  </nav>
   <script src="/static/app.js"></script>
 </body>
 </html>

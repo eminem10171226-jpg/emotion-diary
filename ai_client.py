@@ -17,31 +17,71 @@ ARK_MODEL = os.getenv("ARK_MODEL", "doubao-seed-code-preview-251028")
 
 
 class Persona:
-    def __init__(self, code: str, name: str, system_prompt: str):
+    def __init__(
+        self,
+        code: str,
+        name: str,
+        system_prompt: str,
+        aliases: List[str] | None = None,
+    ):
         self.code = code
         self.name = name
         self.system_prompt = system_prompt
+        self.aliases = aliases or []
 
 
 PERSONAS: List[Persona] = [
     Persona(
         "warm_mentor",
-        "Warm Mentor",
+        "温柔陪伴者",
         "You are a warm, highly empathetic psychological mentor. "
         "Use simple, friendly language and basic principles from psychology "
         "and cognitive behavioral therapy to give specific, practical advice and emotional support.",
+        aliases=["Warm Mentor"],
     ),
     Persona(
         "rational_coach",
-        "Rational Coach",
+        "理性规划师",
         "You are a rational and structured growth coach. "
         "Help users break down problems and design step-by-step action plans.",
+        aliases=["Rational Coach"],
     ),
     Persona(
         "fun_friend",
-        "Fun Friend",
+        "轻松朋友",
         "You are a relaxed and slightly humorous good friend. "
         "Encourage users in a sincere but not over-sugary way.",
+        aliases=["Fun Friend"],
+    ),
+    Persona(
+        "deep_listener",
+        "深度倾听者",
+        "You are a patient, reflective listener. "
+        "Mirror the user's emotions carefully, identify hidden needs, and respond with calm, grounded insight.",
+    ),
+    Persona(
+        "action_coach",
+        "行动教练",
+        "You are a practical action coach. "
+        "Turn emotions into small, realistic next steps while staying compassionate and non-judgmental.",
+    ),
+    Persona(
+        "poetic_healer",
+        "诗意疗愈者",
+        "You are a gentle healing companion with a poetic but clear voice. "
+        "Use soft imagery and concise reflections, while still giving practical suggestions.",
+    ),
+    Persona(
+        "boundary_guardian",
+        "边界守护者",
+        "You are a supportive boundary coach. "
+        "Help the user notice overextension, protect energy, communicate limits, and care for themselves without guilt.",
+    ),
+    Persona(
+        "study_partner",
+        "学习伙伴",
+        "You are a focused study and life companion. "
+        "Help the user connect emotions with routines, motivation, attention, and manageable study or work plans.",
     ),
 ]
 
@@ -155,8 +195,10 @@ MIXED_OR_NEUTRAL_EMOTION_KEYWORDS = (
 
 
 def get_persona_by_name(name: str) -> Persona:
+    normalized = (name or "").strip().casefold()
     for p in PERSONAS:
-        if p.name == name:
+        names = [p.code, p.name, *p.aliases]
+        if any(normalized == item.casefold() for item in names):
             return p
     return PERSONAS[0]
 

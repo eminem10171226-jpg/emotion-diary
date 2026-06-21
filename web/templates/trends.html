@@ -15,23 +15,15 @@
   <div class="bg-glow"></div>
   <div class="container">
     <header>
-      <h1>AI 情绪日记</h1>
-      <p class="subtitle">从心情天气和趋势曲线看见情绪的长期变化</p>
-      <div class="top-bar">
-        <nav>
-          <a href="/">分析</a>
-          <a href="/history">历史记录</a>
-          <a class="active" href="/trends">趋势分析</a>
-          <a href="/kit">急救包</a>
-        </nav>
-      </div>
+      <h1 data-i18n="appTitle">AI 情绪日记</h1>
+      <p class="subtitle" data-i18n="trendsSubtitle">从心情天气和趋势曲线看见情绪的长期变化</p>
     </header>
     <main>
       <section class="section card weather-panel">
         <div class="weather-title-row">
           <div>
             <p class="section-kicker">Mood Weather</p>
-            <h2>心情天气</h2>
+            <h2 data-i18n="moodWeatherTitle">心情天气</h2>
           </div>
         </div>
         <div id="mood-weather" class="mood-weather"></div>
@@ -40,12 +32,12 @@
         <div class="trend-title-row">
           <div>
             <p class="section-kicker">Mood Flow</p>
-            <h2>情绪趋势（近 7 天）</h2>
+            <h2 data-i18n="trendTitle">情绪趋势（近 7 天）</h2>
           </div>
           <span class="trend-period">7 days</span>
         </div>
         <div class="chart-wrap">
-          <canvas id="trend-chart" role="img" aria-label="最近 7 天情绪分数折线图"></canvas>
+          <canvas id="trend-chart" role="img" aria-label="最近 7 天情绪分数折线图" data-i18n-aria-label="trendChartLabel"></canvas>
         </div>
         <div id="trend-summary" class="trend-summary" aria-live="polite"></div>
       </section>
@@ -53,7 +45,7 @@
         <div class="trend-title-row">
           <div>
             <p class="section-kicker">Mood Map</p>
-            <h2>情绪地图</h2>
+            <h2 data-i18n="moodMapTitle">情绪地图</h2>
           </div>
         </div>
         <div id="mood-map" class="mood-map"></div>
@@ -62,14 +54,20 @@
         <div class="trend-title-row">
           <div>
             <p class="section-kicker">Weekly Review</p>
-            <h2>情绪复盘周报</h2>
+            <h2 data-i18n="weeklyReportTitle">情绪复盘周报</h2>
           </div>
         </div>
         <div id="weekly-report" class="weekly-report"></div>
       </section>
     </main>
-    <footer class="footer-note">AI 结果仅供参考，不替代专业心理咨询或医疗建议。</footer>
+    <footer class="footer-note" data-i18n="footerNote">AI 结果仅供参考，不替代专业心理咨询或医疗建议。</footer>
   </div>
+  <nav class="bottom-nav" aria-label="页面导航">
+    <a href="/"><span data-i18n="navAnalyze">分析</span></a>
+    <a href="/history"><span data-i18n="navHistory">历史记录</span></a>
+    <a class="active" href="/trends" aria-current="page"><span data-i18n="navTrends">趋势分析</span></a>
+    <a href="/kit"><span data-i18n="navKit">急救包</span></a>
+  </nav>
   <script src="/static/app.js"></script>
 </body>
 </html>
