@@ -46,8 +46,43 @@
   const PIN_KEY = "emotionDiary.pin";
   const UNLOCKED_KEY = "emotionDiary.unlocked";
   const OFFLINE_DRAFTS_KEY = "emotionDiary.offlineDrafts";
+  const MAX_RECOMMENDATION_ITEMS = 2;
+  const MAX_MEDIA_CARDS = 1;
   let cachedHistoryEntries = [];
   let cachedPetState = null;
+
+  const FOOD_IMAGE_SOURCES = [
+    {
+      keys: ["水果", "fruit", "莓", "苹果", "香蕉", "橙"],
+      url: "https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?auto=format&fit=crop&w=360&q=80",
+    },
+    {
+      keys: ["燕麦", "粥", "oat", "porridge", "牛奶", "早餐"],
+      url: "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?auto=format&fit=crop&w=360&q=80",
+    },
+    {
+      keys: ["蔬菜", "清蒸", "沙拉", "vegetable", "greens"],
+      url: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=360&q=80",
+    },
+    {
+      keys: ["坚果", "核桃", "杏仁", "nuts", "almond"],
+      url: "https://images.unsplash.com/photo-1524593166156-312f362cada0?auto=format&fit=crop&w=360&q=80",
+    },
+    {
+      keys: ["汤", "热饮", "茶", "soup", "tea", "warm"],
+      url: "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=360&q=80",
+    },
+    {
+      keys: ["酸奶", "yogurt", "优格"],
+      url: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=360&q=80",
+    },
+  ];
+
+  const DEFAULT_FOOD_IMAGES = [
+    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=360&q=80",
+    "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=360&q=80",
+    "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=360&q=80",
+  ];
 
   const I18N = {
     zh: {
@@ -138,8 +173,8 @@
       adviceTitle: "建议",
       musicTitle: "音乐建议",
       foodTitle: "饮食建议",
-      musicCoverTitle: "音乐封面推荐",
-      foodImageTitle: "食物图片推荐",
+      musicCoverTitle: "音乐推荐",
+      foodImageTitle: "食物推荐",
       noAdvice: "暂未生成建议",
       noneText: "暂无",
       noMedia: "暂无推荐图片。",
@@ -244,8 +279,8 @@
       adviceTitle: "Suggestions",
       musicTitle: "Music",
       foodTitle: "Food",
-      musicCoverTitle: "Music covers",
-      foodImageTitle: "Food images",
+      musicCoverTitle: "Music recommendation",
+      foodImageTitle: "Food recommendation",
       noAdvice: "No suggestions yet",
       noneText: "None",
       noMedia: "No recommendation images yet.",
@@ -765,8 +800,12 @@
     }
   }
 
-  function foodImageUrl(term) {
-    return mediaFallbackUrl(term || "饮食建议", "food");
+  function compactRecommendationItems(items, limit) {
+    const source = Array.isArray(items) ? items : [];
+    return source
+      .map(function (item) { return String(item || "").trim(); })
+      .filter(function (item) { return !!item; })
+      .slice(0, limit || MAX_RECOMMENDATION_ITEMS);
   }
 
   function hashString(value) {
@@ -808,8 +847,23 @@
     return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
   }
 
+  function foodImageSource(term) {
+    const label = String(term || "").trim() || t("foodTitle");
+    const normalized = label.toLowerCase();
+    const matched = FOOD_IMAGE_SOURCES.find(function (source) {
+      return source.keys.some(function (key) {
+        return normalized.includes(String(key).toLowerCase());
+      });
+    });
+    const fallback = mediaFallbackUrl(label, "food");
+    const source = matched
+      ? matched.url
+      : DEFAULT_FOOD_IMAGES[hashString(label) % DEFAULT_FOOD_IMAGES.length];
+    return { source: source, fallback: fallback };
+  }
+
   async function buildMediaCards(items, kind) {
-    const validItems = items.filter(function (x) { return !!x; }).slice(0, 4);
+    const validItems = compactRecommendationItems(items, MAX_MEDIA_CARDS);
     if (!validItems.length) return "<p class='media-empty'>" + t("noMedia") + "</p>";
 
     if (kind === "music") {
@@ -827,10 +881,10 @@
     }
 
     return validItems.map(function (name) {
-      const src = foodImageUrl(name);
+      const image = foodImageSource(name);
       return (
         "<div class='media-card'>" +
-        "<img loading='lazy' src=\"" + escapeHtml(src) + "\" alt=\"" + escapeHtml(name) + " 图片\">" +
+        "<img loading='lazy' src=\"" + escapeHtml(image.source) + "\" data-fallback=\"" + escapeHtml(image.fallback) + "\" alt=\"" + escapeHtml(name) + " 图片\">" +
         "<p>" + escapeHtml(name) + "</p>" +
         "</div>"
       );
@@ -850,8 +904,8 @@
     const score = clampScore(data.emotion_score ?? 50);
     const summary = data.summary || "暂无总结。";
     const advice = data.advice || [];
-    const music = data.music_suggestions || [];
-    const food = data.food_suggestions || [];
+    const music = compactRecommendationItems(data.music_suggestions);
+    const food = compactRecommendationItems(data.food_suggestions);
     const tone = trendTone(score);
     const weather = moodWeatherForScore(score);
     const gentleTask = makeGentleTask(score, emotion, summary);
@@ -899,10 +953,14 @@
       "<div><h4>" + t("foodTitle") + "</h4><p>" + foodText + "</p></div>" +
       "</div>" +
       "<div class='analysis-media'>" +
+      "<section class='media-section'>" +
       "<h4>" + t("musicCoverTitle") + "</h4>" +
       "<div class='media-grid'>" + musicCards + "</div>" +
+      "</section>" +
+      "<section class='media-section'>" +
       "<h4>" + t("foodImageTitle") + "</h4>" +
       "<div class='media-grid'>" + foodCards + "</div>" +
+      "</section>" +
       "</div>" +
       "</div>"
     );

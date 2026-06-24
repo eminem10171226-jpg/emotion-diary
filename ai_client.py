@@ -286,8 +286,8 @@ def analyze_diary(
         "Neutral, calm, mixed, or ambiguous emotions should usually be between 50 and 79. "
         "3) Summarize the current psychological state in 1-3 short sentences; "
         "4) Provide 2-4 concrete, actionable suggestions for daily life or mental health; "
-        "5) Recommend 2-4 suitable music styles; "
-        "6) Recommend 2-4 suitable food types; "
+        "5) Recommend 1-2 suitable music styles or albums; "
+        "6) Recommend 1-2 suitable food types or simple dishes; "
         "7) Considering the high-frequency keywords from recent days, give 0-3 long-term reminders (things the user should pay attention to over time). "
         + lang_instruction
         + "Also, avoid emoji in the JSON values. "
