@@ -1,4 +1,4 @@
-const CACHE_NAME = "emotion-diary-v9";
+const CACHE_NAME = "emotion-diary-v10";
 const APP_SHELL = [
   "/",
   "/history",

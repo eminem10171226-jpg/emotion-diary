@@ -5,6 +5,7 @@
   const draftCount = document.getElementById("draft-count");
   const resultEl = document.getElementById("analysis-result");
   const errorEl = document.getElementById("analysis-error");
+  const petCard = document.getElementById("pet-card");
   const historyList = document.getElementById("history-list");
   const historySummary = document.getElementById("history-summary");
   const historySearch = document.getElementById("history-search");
@@ -46,6 +47,7 @@
   const UNLOCKED_KEY = "emotionDiary.unlocked";
   const OFFLINE_DRAFTS_KEY = "emotionDiary.offlineDrafts";
   let cachedHistoryEntries = [];
+  let cachedPetState = null;
 
   const I18N = {
     zh: {
@@ -141,6 +143,18 @@
       noAdvice: "暂未生成建议",
       noneText: "暂无",
       noMedia: "暂无推荐图片。",
+      petKicker: "Pet",
+      petTitle: "陪伴小桃",
+      petLoading: "小桃正在醒来...",
+      petReady: "今日已续火，明天再来看看它。",
+      petWaiting: "今天写一篇日记，就能给小桃续火 +1。",
+      petSleepy: "小桃在等你重新开始陪伴。",
+      petPoints: "亲密值",
+      petStreak: "连续陪伴",
+      petLevel: "等级",
+      petDays: "天",
+      petNextLevel: "距离下一级还差 ",
+      petMaxLevel: "已经是满级陪伴",
     },
     en: {
       appTitle: "AI Emotion Diary",
@@ -235,6 +249,18 @@
       noAdvice: "No suggestions yet",
       noneText: "None",
       noMedia: "No recommendation images yet.",
+      petKicker: "Pet",
+      petTitle: "Companion Momo",
+      petLoading: "Momo is waking up...",
+      petReady: "Spark renewed today. Come back tomorrow.",
+      petWaiting: "Write one diary entry today to renew the spark +1.",
+      petSleepy: "Momo is waiting for you to begin again.",
+      petPoints: "Bond",
+      petStreak: "Streak",
+      petLevel: "Level",
+      petDays: "days",
+      petNextLevel: "Next level in ",
+      petMaxLevel: "Max companion level",
     },
   };
 
@@ -287,6 +313,7 @@
       }
     });
     updateDraftCount();
+    if (cachedPetState) renderPet(cachedPetState);
   }
 
   function initInterfaceLanguage() {
@@ -881,9 +908,74 @@
     );
   }
 
+  function petStatusText(pet) {
+    if (pet.checked_in_today) return t("petReady");
+    if (Number(pet.streak_days) > 0) return t("petWaiting");
+    return t("petSleepy");
+  }
+
+  function renderPet(pet) {
+    if (!petCard) return;
+    cachedPetState = pet;
+    const points = Number(pet.points) || 0;
+    const streak = Number(pet.streak_days) || 0;
+    const level = Number(pet.level) || 1;
+    const nextLevel = pet.next_level_points;
+    const progress = nextLevel
+      ? Math.max(8, Math.min(100, Math.round((points / Number(nextLevel)) * 100)))
+      : 100;
+    const mood = pet.mood || "waiting";
+    const nextText = nextLevel
+      ? t("petNextLevel") + Math.max(0, Number(nextLevel) - points)
+      : t("petMaxLevel");
+    petCard.className = "pet-card pet-mood-" + mood + (pet.checked_in_today ? " is-fed" : "");
+    petCard.innerHTML = (
+      "<div class='pet-avatar' aria-hidden='true'>" +
+      "<span class='pet-ear pet-ear-left'></span>" +
+      "<span class='pet-ear pet-ear-right'></span>" +
+      "<span class='pet-spark'></span>" +
+      "<span class='pet-face'>" +
+      "<i class='pet-eye pet-eye-left'></i>" +
+      "<i class='pet-eye pet-eye-right'></i>" +
+      "<i class='pet-mouth'></i>" +
+      "</span>" +
+      "</div>" +
+      "<div class='pet-copy'>" +
+      "<div class='pet-title-row'>" +
+      "<div><p class='section-kicker'>" + t("petKicker") + "</p>" +
+      "<h2>" + t("petTitle") + "</h2></div>" +
+      "<span class='pet-badge'>Lv." + level + "</span>" +
+      "</div>" +
+      "<p class='pet-status'>" + escapeHtml(petStatusText(pet)) + "</p>" +
+      "<div class='pet-stats'>" +
+      "<span><strong>" + points + "</strong><em>" + t("petPoints") + "</em></span>" +
+      "<span><strong>" + streak + "</strong><em>" + t("petDays") + " " + t("petStreak") + "</em></span>" +
+      "<span><strong>" + level + "</strong><em>" + t("petLevel") + "</em></span>" +
+      "</div>" +
+      "<div class='pet-progress' aria-hidden='true'><span style='width:" + progress + "%'></span></div>" +
+      "<p class='pet-next'>" + escapeHtml(nextText) + "</p>" +
+      "</div>"
+    );
+  }
+
+  async function loadPet() {
+    if (!petCard) return;
+    petCard.className = "pet-card pet-loading";
+    petCard.innerHTML = "<div class='pet-loading-copy'>" + t("petLoading") + "</div>";
+    try {
+      const res = await fetch("/api/pet");
+      if (!res.ok) throw new Error("Pet request failed");
+      const pet = await res.json();
+      renderPet(pet);
+    } catch (_e) {
+      petCard.classList.add("hidden");
+    }
+  }
+
   initInterfaceLanguage();
 
   if (hasAnalyzePage) {
+    loadPet();
     restoreActiveAnalysis();
     renderMailbox();
     renderFutureMessages();
@@ -1000,6 +1092,7 @@
       const cardHtml = await renderResultCard(data);
       showResult(cardHtml, true);
       renderRituals(data);
+      if (data.pet) renderPet(data.pet);
       diary.value = "";
       updateDraftCount();
     } catch (e) {

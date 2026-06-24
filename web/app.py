@@ -15,6 +15,8 @@ from models import (
     list_entries,
     get_recent_keywords,
     get_weekly_emotion_trend,
+    get_pet_state,
+    update_pet_after_diary,
 )
 
 app = Flask(
@@ -101,6 +103,7 @@ def api_analyze():
             language=language,
         )
         save_diary_entry(content, analysis, persona_name, session_id)
+        analysis["pet"] = update_pet_after_diary(session_id)
         return jsonify(analysis)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -129,6 +132,11 @@ def api_trend():
     return jsonify({
         "trend": [{"date": str(d), "score": s} for d, s in trend],
     })
+
+
+@app.route("/api/pet")
+def api_pet():
+    return jsonify(get_pet_state(g.session_id))
 
 
 if __name__ == "__main__":

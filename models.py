@@ -81,6 +81,8 @@ def init_db() -> None:
             if not cur.fetchone():
                 cur.execute("ALTER TABLE diary_entries ADD COLUMN session_id TEXT")
                 conn.commit()
+            _create_pet_table(conn)
+            conn.commit()
         finally:
             conn.close()
         return
@@ -111,6 +113,8 @@ def init_db() -> None:
             conn.commit()
         except sqlite3.OperationalError:
             pass
+        _create_pet_table(conn)
+        conn.commit()
     finally:
         conn.close()
 
@@ -129,6 +133,256 @@ class DiaryEntry:
     food_suggestions: List[str]
     keywords: Dict[str, int]
     persona_name: str
+
+
+@dataclass
+class PetState:
+    name: str
+    points: int
+    streak_days: int
+    last_checkin_date: Optional[str]
+    level: int
+    next_level_points: Optional[int]
+    checked_in_today: bool
+    mood: str
+
+
+PET_DEFAULT_NAME = "小桃"
+PET_LEVEL_THRESHOLDS = [0, 3, 7, 14, 30, 60]
+
+
+def _create_pet_table(conn: Any) -> None:
+    if _use_postgres():
+        conn.cursor().execute(
+            """
+            CREATE TABLE IF NOT EXISTS pet_state (
+                id SERIAL PRIMARY KEY,
+                session_id TEXT UNIQUE NOT NULL,
+                pet_name TEXT NOT NULL,
+                points INTEGER NOT NULL,
+                streak_days INTEGER NOT NULL,
+                last_checkin_date TEXT,
+                mood TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+        return
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pet_state (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT UNIQUE NOT NULL,
+            pet_name TEXT NOT NULL,
+            points INTEGER NOT NULL,
+            streak_days INTEGER NOT NULL,
+            last_checkin_date TEXT,
+            mood TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
+
+
+def _parse_date(value: Any) -> Optional[dt.date]:
+    if not value:
+        return None
+    try:
+        return dt.date.fromisoformat(str(value))
+    except ValueError:
+        return None
+
+
+def _pet_level(points: int) -> Tuple[int, Optional[int]]:
+    level = 1
+    next_points: Optional[int] = None
+    for index, threshold in enumerate(PET_LEVEL_THRESHOLDS, start=1):
+        if points >= threshold:
+            level = index
+        elif next_points is None:
+            next_points = threshold
+            break
+    return level, next_points
+
+
+def _pet_mood(checked_in_today: bool, streak_days: int) -> str:
+    if checked_in_today and streak_days >= 7:
+        return "spark"
+    if checked_in_today:
+        return "happy"
+    if streak_days > 0:
+        return "waiting"
+    return "sleepy"
+
+
+def _calculate_streak(dates: List[dt.date]) -> int:
+    if not dates:
+        return 0
+    today = dt.date.today()
+    unique_dates = set(dates)
+    last_date = max(unique_dates)
+    if last_date < today - dt.timedelta(days=1):
+        return 0
+
+    streak = 0
+    cursor = last_date
+    while cursor in unique_dates:
+        streak += 1
+        cursor -= dt.timedelta(days=1)
+    return streak
+
+
+def _pet_dict_from_row(row: Any) -> Dict[str, Any]:
+    points = int(_row_get(row, "points") or 0)
+    level, next_points = _pet_level(points)
+    last_date = _parse_date(_row_get(row, "last_checkin_date"))
+    checked_in_today = last_date == dt.date.today()
+    streak_days = int(_row_get(row, "streak_days") or 0)
+    if last_date and last_date < dt.date.today() - dt.timedelta(days=1):
+        streak_days = 0
+    mood = _pet_mood(checked_in_today, streak_days)
+    return {
+        "name": _row_get(row, "pet_name") or PET_DEFAULT_NAME,
+        "points": points,
+        "streak_days": streak_days,
+        "last_checkin_date": str(last_date) if last_date else None,
+        "level": level,
+        "next_level_points": next_points,
+        "checked_in_today": checked_in_today,
+        "mood": mood,
+    }
+
+
+def _pet_state_from_entries(session_id: str) -> Dict[str, Any]:
+    conn = _get_conn()
+    try:
+        sql = _q(
+            """
+            SELECT DISTINCT date
+            FROM diary_entries
+            WHERE session_id = ?
+            """
+        )
+        if _use_postgres():
+            cur = conn.cursor()
+            cur.execute(sql, (session_id,))
+            rows = cur.fetchall()
+        else:
+            rows = conn.execute(sql, (session_id,)).fetchall()
+    finally:
+        conn.close()
+
+    dates = [
+        parsed for parsed in (_parse_date(_row_get(row, "date")) for row in rows)
+        if parsed is not None
+    ]
+    points = len(set(dates))
+    streak_days = _calculate_streak(dates)
+    last_date = max(dates) if dates else None
+    checked_in_today = last_date == dt.date.today()
+    level, next_points = _pet_level(points)
+    return {
+        "name": PET_DEFAULT_NAME,
+        "points": points,
+        "streak_days": streak_days,
+        "last_checkin_date": str(last_date) if last_date else None,
+        "level": level,
+        "next_level_points": next_points,
+        "checked_in_today": checked_in_today,
+        "mood": _pet_mood(checked_in_today, streak_days),
+    }
+
+
+def _insert_pet_state(session_id: str, state: Dict[str, Any]) -> Dict[str, Any]:
+    now = dt.datetime.now().isoformat(timespec="seconds")
+    conn = _get_conn()
+    try:
+        sql = _q(
+            """
+            INSERT INTO pet_state (
+                session_id, pet_name, points, streak_days,
+                last_checkin_date, mood, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """
+        )
+        values = (
+            session_id,
+            state.get("name") or PET_DEFAULT_NAME,
+            int(state.get("points") or 0),
+            int(state.get("streak_days") or 0),
+            state.get("last_checkin_date"),
+            state.get("mood") or "waiting",
+            now,
+            now,
+        )
+        if _use_postgres():
+            cur = conn.cursor()
+            cur.execute(sql, values)
+        else:
+            conn.execute(sql, values)
+        conn.commit()
+    finally:
+        conn.close()
+    return get_pet_state(session_id)
+
+
+def get_pet_state(session_id: str) -> Dict[str, Any]:
+    conn = _get_conn()
+    try:
+        sql = _q("SELECT * FROM pet_state WHERE session_id = ?")
+        if _use_postgres():
+            cur = conn.cursor()
+            cur.execute(sql, (session_id,))
+            row = cur.fetchone()
+        else:
+            row = conn.execute(sql, (session_id,)).fetchone()
+    finally:
+        conn.close()
+
+    if row:
+        return _pet_dict_from_row(row)
+    return _insert_pet_state(session_id, _pet_state_from_entries(session_id))
+
+
+def update_pet_after_diary(session_id: str) -> Dict[str, Any]:
+    today = dt.date.today()
+    state = get_pet_state(session_id)
+    last_date = _parse_date(state.get("last_checkin_date"))
+    if last_date == today:
+        return state
+
+    streak_days = 1
+    if last_date == today - dt.timedelta(days=1):
+        streak_days = int(state.get("streak_days") or 0) + 1
+
+    points = int(state.get("points") or 0) + 1
+    mood = _pet_mood(True, streak_days)
+    now = dt.datetime.now().isoformat(timespec="seconds")
+
+    conn = _get_conn()
+    try:
+        sql = _q(
+            """
+            UPDATE pet_state
+            SET points = ?, streak_days = ?, last_checkin_date = ?,
+                mood = ?, updated_at = ?
+            WHERE session_id = ?
+            """
+        )
+        values = (points, streak_days, today.isoformat(), mood, now, session_id)
+        if _use_postgres():
+            cur = conn.cursor()
+            cur.execute(sql, values)
+        else:
+            conn.execute(sql, values)
+        conn.commit()
+    finally:
+        conn.close()
+    return get_pet_state(session_id)
 
 
 def save_diary_entry(
@@ -330,5 +584,8 @@ __all__ = [
     "list_entries",
     "get_recent_keywords",
     "get_weekly_emotion_trend",
+    "get_pet_state",
+    "update_pet_after_diary",
     "DiaryEntry",
+    "PetState",
 ]
