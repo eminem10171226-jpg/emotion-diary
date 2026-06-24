@@ -54,34 +54,46 @@
   const FOOD_IMAGE_SOURCES = [
     {
       keys: ["水果", "fruit", "莓", "苹果", "香蕉", "橙"],
-      url: "https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?auto=format&fit=crop&w=360&q=80",
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Fruktsallad_%28Fruit_salad%29.jpg/500px-Fruktsallad_%28Fruit_salad%29.jpg",
     },
     {
       keys: ["燕麦", "粥", "oat", "porridge", "牛奶", "早餐"],
-      url: "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?auto=format&fit=crop&w=360&q=80",
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Oatmeal_with_Berries.jpg/500px-Oatmeal_with_Berries.jpg",
     },
     {
-      keys: ["蔬菜", "清蒸", "沙拉", "vegetable", "greens"],
-      url: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=360&q=80",
+      keys: ["鱼", "清蒸鱼", "fish"],
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Fish_stuffed_with_Thai_herbs.jpg/500px-Fish_stuffed_with_Thai_herbs.jpg",
+    },
+    {
+      keys: ["蔬菜", "清蒸", "vegetable", "greens"],
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Steamed_vegetables_CM.jpg/500px-Steamed_vegetables_CM.jpg",
+    },
+    {
+      keys: ["沙拉", "salad"],
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Vegetable_Salad_%28Unsplash%29.jpg/500px-Vegetable_Salad_%28Unsplash%29.jpg",
     },
     {
       keys: ["坚果", "核桃", "杏仁", "nuts", "almond"],
-      url: "https://images.unsplash.com/photo-1524593166156-312f362cada0?auto=format&fit=crop&w=360&q=80",
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Beer_Nuts_%28cropped%29.jpg/500px-Beer_Nuts_%28cropped%29.jpg",
     },
     {
-      keys: ["汤", "热饮", "茶", "soup", "tea", "warm"],
-      url: "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=360&q=80",
+      keys: ["汤", "soup"],
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/-2022-02-01_Bowl_of_spring_vegetable_soup%2C_Trimingham%2C_Norfolk.JPG/500px--2022-02-01_Bowl_of_spring_vegetable_soup%2C_Trimingham%2C_Norfolk.JPG",
+    },
+    {
+      keys: ["热饮", "茶", "tea", "warm"],
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Hot_Lemon_Tea.jpg/500px-Hot_Lemon_Tea.jpg",
     },
     {
       keys: ["酸奶", "yogurt", "优格"],
-      url: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=360&q=80",
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Liat_Portal_for_Foodie_Disorder_-_Yogurt_Bowl_with_Figs%2C_Nuts%2C_Chia_Seeds%2C_and_Seaweed.jpg/500px-Liat_Portal_for_Foodie_Disorder_-_Yogurt_Bowl_with_Figs%2C_Nuts%2C_Chia_Seeds%2C_and_Seaweed.jpg",
     },
   ];
 
   const DEFAULT_FOOD_IMAGES = [
-    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=360&q=80",
-    "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=360&q=80",
-    "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=360&q=80",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Vegetable_Salad_%28Unsplash%29.jpg/500px-Vegetable_Salad_%28Unsplash%29.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Fruktsallad_%28Fruit_salad%29.jpg/500px-Fruktsallad_%28Fruit_salad%29.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Oatmeal_with_Berries.jpg/500px-Oatmeal_with_Berries.jpg",
   ];
 
   const I18N = {
@@ -785,19 +797,82 @@
     );
   }
 
-  async function fetchMusicCover(term) {
-    const q = encodeURIComponent(term || "music");
-    const url = "https://itunes.apple.com/search?media=music&entity=album&limit=1&term=" + q;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      const payload = await res.json();
-      const item = (payload.results || [])[0];
-      if (!item || !item.artworkUrl100) return null;
-      return item.artworkUrl100.replace("100x100bb", "300x300bb");
-    } catch (_e) {
-      return null;
+  function uniqueItems(items) {
+    const seen = new Set();
+    return items
+      .map(function (item) { return String(item || "").trim(); })
+      .filter(function (item) {
+        if (!item || seen.has(item)) return false;
+        seen.add(item);
+        return true;
+      });
+  }
+
+  function extractChineseMusicParts(term) {
+    const text = String(term || "").trim();
+    const titleMatch = text.match(/《([^》]+)》/);
+    const artistMatch = text.match(/(?:如|例如)?\s*([^，、。；;（）()《》]{1,16})的《[^》]+》/);
+    const artist = artistMatch ? artistMatch[1].replace(/^(如|例如)/, "").trim() : "";
+    return {
+      artist: artist,
+      title: titleMatch ? titleMatch[1].trim() : "",
+    };
+  }
+
+  function musicSearchQueries(term) {
+    const text = String(term || "").trim();
+    const parts = extractChineseMusicParts(text);
+    const cleaned = text
+      .replace(/[（(][^）)]*[）)]/g, " ")
+      .replace(/[《》]/g, " ")
+      .replace(/(例如|比如|如|专辑|单曲|歌曲|音乐建议|音乐推荐)/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const candidates = [];
+
+    if (/赵雷/.test(text) && /鼓楼/.test(text)) candidates.push("赵雷 鼓楼");
+    if (/班得瑞/.test(text)) candidates.push("Bandari");
+    if (parts.artist && parts.title) candidates.push(parts.artist + " " + parts.title);
+    if (parts.title) candidates.push(parts.title);
+    if (/轻音乐|纯音乐/.test(text)) candidates.push("轻音乐", "relaxing piano music");
+    if (/民谣/.test(text)) candidates.push("治愈系民谣", "healing folk");
+    candidates.push(cleaned, text, "relaxing music");
+
+    return uniqueItems(candidates).slice(0, 6);
+  }
+
+  function mediaCardLabel(name, kind) {
+    const text = String(name || "").trim();
+    if (kind === "music") {
+      const parts = extractChineseMusicParts(text);
+      if (parts.artist && parts.title) return parts.artist + "《" + parts.title + "》";
+      if (parts.title) return "《" + parts.title + "》";
+      return text
+        .replace(/[（(][^）)]*[）)]/g, "")
+        .replace(/\s+/g, " ")
+        .trim() || text;
     }
+    return text.split(/[、,，；;]/)[0].trim() || text;
+  }
+
+  async function fetchMusicCover(term) {
+    const queries = musicSearchQueries(term);
+    for (const query of queries) {
+      const q = encodeURIComponent(query || "music");
+      const url = "https://itunes.apple.com/search?media=music&entity=album&limit=1&term=" + q;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const payload = await res.json();
+        const item = (payload.results || [])[0];
+        if (item && item.artworkUrl100) {
+          return item.artworkUrl100.replace("100x100bb", "300x300bb");
+        }
+      } catch (_e) {
+        // Try the next cleaner query before falling back.
+      }
+    }
+    return null;
   }
 
   function compactRecommendationItems(items, limit) {
@@ -825,8 +900,6 @@
       ["#fff1d8", "#f4bd62", "#6d4612"],
     ];
     const palette = palettes[hashString(term + kind) % palettes.length];
-    const label = escapeHtml(String(term || "").trim().slice(0, 16));
-    const title = kind === "food" ? "饮食建议" : "音乐建议";
     const accentPath = kind === "food"
       ? "M355 155c72 18 125 82 125 157 0 92-74 166-166 166-86 0-158-65-166-149 57 16 120-1 162-43 37-36 51-84 45-131Z"
       : "M214 176h208v194c0 35-29 64-64 64s-64-29-64-64 29-64 64-64c14 0 28 5 39 13V223H239v147c0 35-29 64-64 64s-64-29-64-64 29-64 64-64c14 0 27 4 39 12V176Z";
@@ -839,9 +912,8 @@
       "<rect width='600' height='600' rx='42' fill='url(#g)'/>" +
       "<circle cx='478' cy='104' r='118' fill='rgba(255,255,255,0.34)'/>" +
       "<circle cx='118' cy='486' r='142' fill='rgba(255,255,255,0.24)'/>" +
+      "<circle cx='305' cy='302' r='170' fill='rgba(255,255,255,0.2)'/>" +
       "<path d='" + accentPath + "' fill='rgba(255,255,255,0.55)'/>" +
-      "<text x='42' y='86' font-family='Segoe UI, Microsoft YaHei, sans-serif' font-size='30' font-weight='700' fill='" + palette[2] + "'>" + title + "</text>" +
-      "<text x='42' y='522' font-family='Segoe UI, Microsoft YaHei, sans-serif' font-size='42' font-weight='800' fill='" + palette[2] + "'>" + label + "</text>" +
       "</svg>"
     );
     return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
@@ -871,10 +943,11 @@
       return validItems.map(function (name, idx) {
         const fallback = mediaFallbackUrl(name, "music");
         const src = covers[idx] || fallback;
+        const label = mediaCardLabel(name, "music");
         return (
           "<div class='media-card'>" +
           "<img loading='lazy' src=\"" + escapeHtml(src) + "\" data-fallback=\"" + escapeHtml(fallback) + "\" alt='音乐专辑封面'>" +
-          "<p>" + escapeHtml(name) + "</p>" +
+          "<p>" + escapeHtml(label) + "</p>" +
           "</div>"
         );
       }).join("");
@@ -882,10 +955,11 @@
 
     return validItems.map(function (name) {
       const image = foodImageSource(name);
+      const label = mediaCardLabel(name, "food");
       return (
         "<div class='media-card'>" +
-        "<img loading='lazy' src=\"" + escapeHtml(image.source) + "\" data-fallback=\"" + escapeHtml(image.fallback) + "\" alt=\"" + escapeHtml(name) + " 图片\">" +
-        "<p>" + escapeHtml(name) + "</p>" +
+        "<img loading='lazy' src=\"" + escapeHtml(image.source) + "\" data-fallback=\"" + escapeHtml(image.fallback) + "\" alt=\"" + escapeHtml(label) + " 图片\">" +
+        "<p>" + escapeHtml(label) + "</p>" +
         "</div>"
       );
     }).join("");
