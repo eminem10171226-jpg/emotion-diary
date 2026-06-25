@@ -27,6 +27,12 @@
   const clearPinBtn = document.getElementById("clear-pin");
   const privacyStatus = document.getElementById("privacy-status");
   const offlineDrafts = document.getElementById("offline-drafts");
+  const profileModal = document.getElementById("profile-modal");
+  const profileForm = document.getElementById("profile-form");
+  const profileEditBtn = document.getElementById("profile-edit");
+  const profileSkipBtn = document.getElementById("profile-skip");
+  const profileLocateBtn = document.getElementById("profile-locate");
+  const profileLocationStatus = document.getElementById("profile-location-status");
   const breathToggle = document.getElementById("breath-toggle");
   const breathOrb = document.getElementById("breath-orb");
   const breathLabel = document.getElementById("breath-label");
@@ -38,6 +44,7 @@
   const hasAnalyzePage = !!(diary && analyzeBtn && resultEl && errorEl);
   const hasHistoryPage = !!historyList;
   const hasTrendPage = !!trendCanvas;
+  const APP_CLIENT_VERSION = "profile-weather-v1";
   const ACTIVE_ANALYSIS_KEY = "emotionDiary.activeAnalysis";
   const UI_LANGUAGE_KEY = "emotionDiary.uiLanguage";
   const MOOD_MAILBOX_KEY = "emotionDiary.moodMailbox";
@@ -50,6 +57,8 @@
   const MAX_MEDIA_CARDS = 1;
   let cachedHistoryEntries = [];
   let cachedPetState = null;
+  let cachedUserProfile = null;
+  let pendingWeatherContext = null;
 
   const FOOD_IMAGE_SOURCES = [
     {
@@ -202,6 +211,28 @@
       petDays: "天",
       petNextLevel: "距离下一级还差 ",
       petMaxLevel: "已经是满级陪伴",
+      profileEdit: "个性偏好",
+      profileTitle: "先认识你一点点",
+      profileIntro: "选择你喜欢的事物，之后的分析建议会更贴近你的生活。",
+      profileSkip: "稍后",
+      profileSports: "运动",
+      profileGames: "游戏 / 电竞",
+      profileHobbies: "日常爱好",
+      profileMusic: "音乐类型",
+      profileMbti: "MBTI",
+      profileMbtiEmpty: "不确定 / 暂不选择",
+      profileMovie: "喜欢的电影类型",
+      profileMoviePlaceholder: "例如：科幻、悬疑、治愈片",
+      profileNotes: "其他想让 AI 记住的偏好",
+      profileNotesPlaceholder: "例如：不喜欢太鸡汤，希望建议更具体",
+      profileLocate: "获取城市天气",
+      profileLocationIdle: "可选：授权后会按当日天气给建议。",
+      profileLocating: "正在获取城市和天气...",
+      profileLocationDenied: "未获取定位，也可以继续保存偏好。",
+      profileLocationSaved: "已记录天气：",
+      profileSave: "保存并开始",
+      profileSaved: "已保存，之后会按你的偏好给建议。",
+      profileSaveFailed: "保存失败，请稍后再试。",
     },
     en: {
       appTitle: "AI Emotion Diary",
@@ -308,6 +339,28 @@
       petDays: "days",
       petNextLevel: "Next level in ",
       petMaxLevel: "Max companion level",
+      profileEdit: "Preferences",
+      profileTitle: "A little about you",
+      profileIntro: "Choose what you like so future suggestions can fit your life better.",
+      profileSkip: "Later",
+      profileSports: "Sports",
+      profileGames: "Games / esports",
+      profileHobbies: "Hobbies",
+      profileMusic: "Music genres",
+      profileMbti: "MBTI",
+      profileMbtiEmpty: "Not sure / skip",
+      profileMovie: "Favorite movie types",
+      profileMoviePlaceholder: "e.g. sci-fi, mystery, comfort films",
+      profileNotes: "Other preferences for AI",
+      profileNotesPlaceholder: "e.g. less generic comfort, more concrete advice",
+      profileLocate: "Get city weather",
+      profileLocationIdle: "Optional: with permission, advice can consider today's weather.",
+      profileLocating: "Getting city and weather...",
+      profileLocationDenied: "Location was not added. You can still save preferences.",
+      profileLocationSaved: "Weather saved: ",
+      profileSave: "Save and start",
+      profileSaved: "Saved. Future suggestions will use your preferences.",
+      profileSaveFailed: "Could not save. Please try again later.",
     },
   };
 
@@ -385,6 +438,7 @@
   function saveActiveAnalysis(html) {
     try {
       sessionStorage.setItem(ACTIVE_ANALYSIS_KEY, JSON.stringify({
+        version: APP_CLIENT_VERSION,
         html: html,
         savedAt: Date.now(),
       }));
@@ -406,6 +460,10 @@
       const raw = sessionStorage.getItem(ACTIVE_ANALYSIS_KEY);
       if (!raw) return;
       const stored = JSON.parse(raw);
+      if (stored && stored.version !== APP_CLIENT_VERSION) {
+        sessionStorage.removeItem(ACTIVE_ANALYSIS_KEY);
+        return;
+      }
       if (stored && stored.html) {
         showResult(stored.html, false);
       }
@@ -451,6 +509,169 @@
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (_e) {}
+  }
+
+  function profileValues(name) {
+    if (!profileForm) return [];
+    return Array.from(profileForm.querySelectorAll("input[name='" + name + "']:checked"))
+      .map(function (input) { return input.value; });
+  }
+
+  function setProfileValues(name, values) {
+    if (!profileForm) return;
+    const selected = new Set(Array.isArray(values) ? values : []);
+    profileForm.querySelectorAll("input[name='" + name + "']").forEach(function (input) {
+      input.checked = selected.has(input.value);
+    });
+  }
+
+  function setProfileModalVisible(visible) {
+    if (!profileModal) return;
+    profileModal.classList.toggle("hidden", !visible);
+    document.body.classList.toggle("profile-modal-open", visible);
+  }
+
+  function weatherLine(weather) {
+    if (!weather) return "";
+    const place = weather.city || weather.country || "";
+    const label = weather.weather_label || "";
+    const temp = weather.temperature !== undefined && weather.temperature !== null
+      ? Math.round(Number(weather.temperature)) + "°C"
+      : "";
+    return [place, label, temp].filter(Boolean).join(" · ");
+  }
+
+  function renderProfileWeatherStatus(profile) {
+    if (!profileLocationStatus) return;
+    const weather = pendingWeatherContext || (profile && profile.weather);
+    const line = weatherLine(weather);
+    profileLocationStatus.textContent = line
+      ? t("profileLocationSaved") + line
+      : t("profileLocationIdle");
+  }
+
+  function fillProfileForm(profile) {
+    if (!profileForm) return;
+    const data = profile || {};
+    setProfileValues("sports", data.sports);
+    setProfileValues("games", data.games);
+    setProfileValues("hobbies", data.hobbies);
+    setProfileValues("music_genres", data.music_genres);
+    const mbti = document.getElementById("profile-mbti");
+    const movie = document.getElementById("profile-movie");
+    const notes = document.getElementById("profile-notes");
+    if (mbti) mbti.value = data.mbti || "";
+    if (movie) movie.value = data.movie_preference || "";
+    if (notes) notes.value = data.notes || "";
+    pendingWeatherContext = data.weather || null;
+    renderProfileWeatherStatus(data);
+  }
+
+  function collectProfileForm(completed) {
+    const mbti = document.getElementById("profile-mbti");
+    const movie = document.getElementById("profile-movie");
+    const notes = document.getElementById("profile-notes");
+    const current = cachedUserProfile || {};
+    return {
+      completed: completed,
+      sports: profileValues("sports"),
+      games: profileValues("games"),
+      hobbies: profileValues("hobbies"),
+      music_genres: profileValues("music_genres"),
+      mbti: mbti ? mbti.value : "",
+      movie_preference: movie ? movie.value : "",
+      notes: notes ? notes.value : "",
+      location_consent: !!(pendingWeatherContext || current.location_consent),
+      city: pendingWeatherContext ? pendingWeatherContext.city : current.city,
+      country: pendingWeatherContext ? pendingWeatherContext.country : current.country,
+      latitude: pendingWeatherContext ? pendingWeatherContext.latitude : current.latitude,
+      longitude: pendingWeatherContext ? pendingWeatherContext.longitude : current.longitude,
+      weather: pendingWeatherContext || current.weather || null,
+    };
+  }
+
+  async function saveProfile(completed) {
+    if (!profileForm) return;
+    const payload = collectProfileForm(completed);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const profile = await res.json();
+      if (!res.ok) throw new Error(profile.error || t("profileSaveFailed"));
+      cachedUserProfile = profile;
+      fillProfileForm(profile);
+      setProfileModalVisible(false);
+      if (profileLocationStatus) profileLocationStatus.textContent = t("profileSaved");
+    } catch (_e) {
+      if (profileLocationStatus) profileLocationStatus.textContent = t("profileSaveFailed");
+    }
+  }
+
+  async function locateForWeather() {
+    if (!profileLocationStatus) return;
+    if (!navigator.geolocation) {
+      profileLocationStatus.textContent = t("profileLocationDenied");
+      return;
+    }
+    profileLocationStatus.textContent = t("profileLocating");
+    navigator.geolocation.getCurrentPosition(async function (position) {
+      try {
+        const coords = position.coords || {};
+        const res = await fetch("/api/weather", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+          }),
+        });
+        const weather = await res.json();
+        if (!res.ok) throw new Error(weather.error || t("profileLocationDenied"));
+        pendingWeatherContext = weather;
+        renderProfileWeatherStatus({ weather: weather });
+      } catch (_e) {
+        profileLocationStatus.textContent = t("profileLocationDenied");
+      }
+    }, function () {
+      profileLocationStatus.textContent = t("profileLocationDenied");
+    }, {
+      enableHighAccuracy: false,
+      timeout: 10000,
+      maximumAge: 30 * 60 * 1000,
+    });
+  }
+
+  async function initProfile() {
+    if (!profileForm) return;
+    try {
+      const res = await fetch("/api/profile");
+      if (!res.ok) return;
+      cachedUserProfile = await res.json();
+      fillProfileForm(cachedUserProfile);
+      if (!cachedUserProfile.completed) setProfileModalVisible(true);
+    } catch (_e) {}
+
+    if (profileEditBtn) {
+      profileEditBtn.addEventListener("click", function () {
+        fillProfileForm(cachedUserProfile);
+        setProfileModalVisible(true);
+      });
+    }
+    if (profileSkipBtn) {
+      profileSkipBtn.addEventListener("click", function () {
+        saveProfile(true);
+      });
+    }
+    if (profileLocateBtn) {
+      profileLocateBtn.addEventListener("click", locateForWeather);
+    }
+    profileForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      saveProfile(true);
+    });
   }
 
   function clampScore(value) {
@@ -1107,6 +1328,7 @@
   initInterfaceLanguage();
 
   if (hasAnalyzePage) {
+    initProfile();
     loadPet();
     restoreActiveAnalysis();
     renderMailbox();

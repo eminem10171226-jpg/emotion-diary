@@ -16,6 +16,82 @@
 </head>
 <body>
   <div class="bg-glow"></div>
+  <div id="profile-modal" class="profile-modal hidden" role="dialog" aria-modal="true" aria-labelledby="profile-title">
+    <form id="profile-form" class="profile-panel">
+      <div class="profile-modal-head">
+        <div>
+          <p class="section-kicker">Profile</p>
+          <h2 id="profile-title" data-i18n="profileTitle">先认识你一点点</h2>
+        </div>
+        <button id="profile-skip" class="ghost-button compact-button" type="button" data-i18n="profileSkip">稍后</button>
+      </div>
+      <p class="profile-intro" data-i18n="profileIntro">选择你喜欢的事物，之后的分析建议会更贴近你的生活。</p>
+      <div class="profile-form-grid">
+        <fieldset class="profile-group">
+          <legend data-i18n="profileSports">运动</legend>
+          <label><input type="checkbox" name="sports" value="网球"><span>网球</span></label>
+          <label><input type="checkbox" name="sports" value="足球"><span>足球</span></label>
+          <label><input type="checkbox" name="sports" value="篮球"><span>篮球</span></label>
+          <label><input type="checkbox" name="sports" value="羽毛球"><span>羽毛球</span></label>
+          <label><input type="checkbox" name="sports" value="跑步"><span>跑步</span></label>
+          <label><input type="checkbox" name="sports" value="健身"><span>健身</span></label>
+        </fieldset>
+        <fieldset class="profile-group">
+          <legend data-i18n="profileGames">游戏 / 电竞</legend>
+          <label><input type="checkbox" name="games" value="英雄联盟"><span>英雄联盟</span></label>
+          <label><input type="checkbox" name="games" value="三角洲行动"><span>三角洲行动</span></label>
+          <label><input type="checkbox" name="games" value="CSGO/CS2"><span>CSGO/CS2</span></label>
+          <label><input type="checkbox" name="games" value="王者荣耀"><span>王者荣耀</span></label>
+          <label><input type="checkbox" name="games" value="原神"><span>原神</span></label>
+        </fieldset>
+        <fieldset class="profile-group">
+          <legend data-i18n="profileHobbies">日常爱好</legend>
+          <label><input type="checkbox" name="hobbies" value="看电影"><span>看电影</span></label>
+          <label><input type="checkbox" name="hobbies" value="听音乐"><span>听音乐</span></label>
+          <label><input type="checkbox" name="hobbies" value="阅读"><span>阅读</span></label>
+          <label><input type="checkbox" name="hobbies" value="摄影"><span>摄影</span></label>
+          <label><input type="checkbox" name="hobbies" value="绘画"><span>绘画</span></label>
+          <label><input type="checkbox" name="hobbies" value="旅行"><span>旅行</span></label>
+        </fieldset>
+        <fieldset class="profile-group">
+          <legend data-i18n="profileMusic">音乐类型</legend>
+          <label><input type="checkbox" name="music_genres" value="流行"><span>流行</span></label>
+          <label><input type="checkbox" name="music_genres" value="民谣"><span>民谣</span></label>
+          <label><input type="checkbox" name="music_genres" value="轻音乐"><span>轻音乐</span></label>
+          <label><input type="checkbox" name="music_genres" value="R&B"><span>R&B</span></label>
+          <label><input type="checkbox" name="music_genres" value="摇滚"><span>摇滚</span></label>
+          <label><input type="checkbox" name="music_genres" value="电子"><span>电子</span></label>
+          <label><input type="checkbox" name="music_genres" value="古典"><span>古典</span></label>
+          <label><input type="checkbox" name="music_genres" value="Lo-fi"><span>Lo-fi</span></label>
+        </fieldset>
+      </div>
+      <div class="profile-fields">
+        <label>
+          <span data-i18n="profileMbti">MBTI</span>
+          <select id="profile-mbti" name="mbti">
+            <option value="" data-i18n="profileMbtiEmpty">不确定 / 暂不选择</option>
+            <option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option>
+            <option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option>
+            <option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option>
+            <option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option>
+          </select>
+        </label>
+        <label>
+          <span data-i18n="profileMovie">喜欢的电影类型</span>
+          <input id="profile-movie" name="movie_preference" type="text" placeholder="例如：科幻、悬疑、治愈片" data-i18n-placeholder="profileMoviePlaceholder">
+        </label>
+        <label>
+          <span data-i18n="profileNotes">其他想让 AI 记住的偏好</span>
+          <textarea id="profile-notes" name="notes" rows="2" placeholder="例如：不喜欢太鸡汤，希望建议更具体" data-i18n-placeholder="profileNotesPlaceholder"></textarea>
+        </label>
+      </div>
+      <div class="profile-weather-row">
+        <button id="profile-locate" class="secondary-button" type="button" data-i18n="profileLocate">获取城市天气</button>
+        <p id="profile-location-status" class="profile-location-status" data-i18n="profileLocationIdle">可选：授权后会按当日天气给建议。</p>
+      </div>
+      <button class="profile-save-button" type="submit" data-i18n="profileSave">保存并开始</button>
+    </form>
+  </div>
   <div class="container">
     <header>
       <h1 data-i18n="appTitle">AI 情绪日记</h1>
@@ -40,6 +116,7 @@
           </select>
         </label>
       </section>
+      <button id="profile-edit" class="profile-edit-button" type="button" data-i18n="profileEdit">个性偏好</button>
       <section id="pet-card" class="pet-card" aria-live="polite"></section>
       <section class="diary-section card composer-card">
         <div class="composer-head">

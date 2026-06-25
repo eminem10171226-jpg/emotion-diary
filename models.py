@@ -82,6 +82,7 @@ def init_db() -> None:
                 cur.execute("ALTER TABLE diary_entries ADD COLUMN session_id TEXT")
                 conn.commit()
             _create_pet_table(conn)
+            _create_user_profile_table(conn)
             conn.commit()
         finally:
             conn.close()
@@ -114,6 +115,7 @@ def init_db() -> None:
         except sqlite3.OperationalError:
             pass
         _create_pet_table(conn)
+        _create_user_profile_table(conn)
         conn.commit()
     finally:
         conn.close()
@@ -147,8 +149,64 @@ class PetState:
     mood: str
 
 
+DEFAULT_USER_PROFILE: Dict[str, Any] = {
+    "completed": False,
+    "sports": [],
+    "games": [],
+    "hobbies": [],
+    "music_genres": [],
+    "mbti": "",
+    "movie_preference": "",
+    "notes": "",
+    "location_consent": False,
+    "city": "",
+    "country": "",
+    "latitude": None,
+    "longitude": None,
+    "weather": None,
+    "updated_at": None,
+}
+
 PET_DEFAULT_NAME = "小桃"
 PET_LEVEL_THRESHOLDS = [0, 3, 7, 14, 30, 60]
+
+
+def _create_user_profile_table(conn: Any) -> None:
+    if _use_postgres():
+        conn.cursor().execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_profile (
+                id SERIAL PRIMARY KEY,
+                session_id TEXT UNIQUE NOT NULL,
+                profile_json TEXT NOT NULL,
+                city TEXT,
+                country TEXT,
+                latitude DOUBLE PRECISION,
+                longitude DOUBLE PRECISION,
+                weather_json TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+        return
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_profile (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT UNIQUE NOT NULL,
+            profile_json TEXT NOT NULL,
+            city TEXT,
+            country TEXT,
+            latitude REAL,
+            longitude REAL,
+            weather_json TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
 
 
 def _create_pet_table(conn: Any) -> None:
@@ -194,6 +252,204 @@ def _parse_date(value: Any) -> Optional[dt.date]:
         return dt.date.fromisoformat(str(value))
     except ValueError:
         return None
+
+
+def _clean_text(value: Any, limit: int = 160) -> str:
+    text = " ".join(str(value or "").split())
+    return text[:limit]
+
+
+def _clean_list(value: Any, limit: int = 12) -> List[str]:
+    if not isinstance(value, list):
+        return []
+    cleaned: List[str] = []
+    seen = set()
+    for item in value:
+        text = _clean_text(item, 32)
+        if text and text not in seen:
+            seen.add(text)
+            cleaned.append(text)
+        if len(cleaned) >= limit:
+            break
+    return cleaned
+
+
+def _clean_float(value: Any) -> Optional[float]:
+    try:
+        return round(float(value), 5)
+    except (TypeError, ValueError):
+        return None
+
+
+def _normalize_weather_context(value: Any) -> Optional[Dict[str, Any]]:
+    if not isinstance(value, dict):
+        return None
+    return {
+        "city": _clean_text(value.get("city"), 48),
+        "country": _clean_text(value.get("country"), 48),
+        "temperature": value.get("temperature"),
+        "apparent_temperature": value.get("apparent_temperature"),
+        "weather_code": value.get("weather_code"),
+        "weather_label": _clean_text(value.get("weather_label"), 48),
+        "precipitation": value.get("precipitation"),
+        "wind_speed": value.get("wind_speed"),
+        "humidity": value.get("humidity"),
+        "observed_at": _clean_text(value.get("observed_at"), 48),
+    }
+
+
+def _normalize_profile(profile: Dict[str, Any]) -> Dict[str, Any]:
+    weather = _normalize_weather_context(profile.get("weather"))
+    normalized = {
+        "completed": bool(profile.get("completed")),
+        "sports": _clean_list(profile.get("sports"), 10),
+        "games": _clean_list(profile.get("games"), 10),
+        "hobbies": _clean_list(profile.get("hobbies"), 10),
+        "music_genres": _clean_list(profile.get("music_genres"), 10),
+        "mbti": _clean_text(profile.get("mbti"), 8).upper(),
+        "movie_preference": _clean_text(profile.get("movie_preference"), 80),
+        "notes": _clean_text(profile.get("notes"), 220),
+        "location_consent": bool(profile.get("location_consent")),
+        "city": _clean_text(profile.get("city"), 48),
+        "country": _clean_text(profile.get("country"), 48),
+        "latitude": _clean_float(profile.get("latitude")),
+        "longitude": _clean_float(profile.get("longitude")),
+        "weather": weather,
+        "updated_at": _clean_text(profile.get("updated_at"), 48),
+    }
+    if normalized["mbti"] and normalized["mbti"] not in {
+        "INTJ", "INTP", "ENTJ", "ENTP",
+        "INFJ", "INFP", "ENFJ", "ENFP",
+        "ISTJ", "ISFJ", "ESTJ", "ESFJ",
+        "ISTP", "ISFP", "ESTP", "ESFP",
+    }:
+        normalized["mbti"] = ""
+    return normalized
+
+
+def _profile_from_row(row: Any) -> Dict[str, Any]:
+    profile: Dict[str, Any] = dict(DEFAULT_USER_PROFILE)
+    try:
+        stored = json.loads(_row_get(row, "profile_json") or "{}")
+    except json.JSONDecodeError:
+        stored = {}
+    if isinstance(stored, dict):
+        profile.update(stored)
+
+    weather_raw = _row_get(row, "weather_json")
+    if weather_raw:
+        try:
+            profile["weather"] = json.loads(weather_raw)
+        except json.JSONDecodeError:
+            profile["weather"] = None
+    profile["city"] = _row_get(row, "city") or profile.get("city") or ""
+    profile["country"] = _row_get(row, "country") or profile.get("country") or ""
+    profile["latitude"] = _row_get(row, "latitude")
+    profile["longitude"] = _row_get(row, "longitude")
+    profile["updated_at"] = _row_get(row, "updated_at")
+    return _normalize_profile(profile)
+
+
+def get_user_profile(session_id: str) -> Dict[str, Any]:
+    conn = _get_conn()
+    try:
+        sql = _q("SELECT * FROM user_profile WHERE session_id = ?")
+        if _use_postgres():
+            cur = conn.cursor()
+            cur.execute(sql, (session_id,))
+            row = cur.fetchone()
+        else:
+            row = conn.execute(sql, (session_id,)).fetchone()
+    finally:
+        conn.close()
+
+    if not row:
+        return dict(DEFAULT_USER_PROFILE)
+    return _profile_from_row(row)
+
+
+def save_user_profile(session_id: str, profile: Dict[str, Any]) -> Dict[str, Any]:
+    current = get_user_profile(session_id)
+    merged = dict(current)
+    merged.update(profile or {})
+    merged["updated_at"] = dt.datetime.now().isoformat(timespec="seconds")
+    normalized = _normalize_profile(merged)
+    weather = normalized.get("weather")
+    profile_json = json.dumps(normalized, ensure_ascii=False)
+    weather_json = json.dumps(weather, ensure_ascii=False) if weather else None
+    now = normalized["updated_at"]
+
+    conn = _get_conn()
+    try:
+        existing_sql = _q("SELECT id FROM user_profile WHERE session_id = ?")
+        if _use_postgres():
+            cur = conn.cursor()
+            cur.execute(existing_sql, (session_id,))
+            exists = cur.fetchone()
+        else:
+            exists = conn.execute(existing_sql, (session_id,)).fetchone()
+
+        if exists:
+            sql = _q(
+                """
+                UPDATE user_profile
+                SET profile_json = ?, city = ?, country = ?, latitude = ?,
+                    longitude = ?, weather_json = ?, updated_at = ?
+                WHERE session_id = ?
+                """
+            )
+            values = (
+                profile_json,
+                normalized.get("city") or None,
+                normalized.get("country") or None,
+                normalized.get("latitude"),
+                normalized.get("longitude"),
+                weather_json,
+                now,
+                session_id,
+            )
+        else:
+            sql = _q(
+                """
+                INSERT INTO user_profile (
+                    session_id, profile_json, city, country, latitude,
+                    longitude, weather_json, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """
+            )
+            values = (
+                session_id,
+                profile_json,
+                normalized.get("city") or None,
+                normalized.get("country") or None,
+                normalized.get("latitude"),
+                normalized.get("longitude"),
+                weather_json,
+                now,
+                now,
+            )
+
+        if _use_postgres():
+            cur = conn.cursor()
+            cur.execute(sql, values)
+        else:
+            conn.execute(sql, values)
+        conn.commit()
+    finally:
+        conn.close()
+    return get_user_profile(session_id)
+
+
+def save_weather_context(session_id: str, weather: Dict[str, Any]) -> Dict[str, Any]:
+    current = get_user_profile(session_id)
+    current["location_consent"] = True
+    current["city"] = _clean_text(weather.get("city"), 48)
+    current["country"] = _clean_text(weather.get("country"), 48)
+    current["latitude"] = _clean_float(weather.get("latitude"))
+    current["longitude"] = _clean_float(weather.get("longitude"))
+    current["weather"] = _normalize_weather_context(weather)
+    return save_user_profile(session_id, current)
 
 
 def _pet_level(points: int) -> Tuple[int, Optional[int]]:
@@ -586,6 +842,9 @@ __all__ = [
     "get_weekly_emotion_trend",
     "get_pet_state",
     "update_pet_after_diary",
+    "get_user_profile",
+    "save_user_profile",
+    "save_weather_context",
     "DiaryEntry",
     "PetState",
 ]

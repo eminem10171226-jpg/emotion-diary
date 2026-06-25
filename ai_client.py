@@ -245,11 +245,45 @@ def _normalize_emotion_score(parsed: Dict[str, Any]) -> None:
     parsed["emotion_score"] = score
 
 
+def _compact_profile_context(profile: Dict[str, Any] | None) -> Dict[str, Any]:
+    if not isinstance(profile, dict) or not profile.get("completed"):
+        return {}
+    context: Dict[str, Any] = {}
+    for key in ("sports", "games", "hobbies", "music_genres"):
+        values = profile.get(key)
+        if isinstance(values, list) and values:
+            context[key] = values[:8]
+    for key in ("mbti", "movie_preference", "notes"):
+        value = str(profile.get(key) or "").strip()
+        if value:
+            context[key] = value[:180]
+    return context
+
+
+def _compact_weather_context(weather: Dict[str, Any] | None) -> Dict[str, Any]:
+    if not isinstance(weather, dict):
+        return {}
+    keys = (
+        "city",
+        "country",
+        "weather_label",
+        "temperature",
+        "apparent_temperature",
+        "humidity",
+        "precipitation",
+        "wind_speed",
+        "observed_at",
+    )
+    return {key: weather.get(key) for key in keys if weather.get(key) not in (None, "")}
+
+
 def analyze_diary(
     content: str,
     recent_keywords: Dict[str, int],
     persona_name: str,
     language: str = "auto",  # "auto" | "zh" | "en"
+    user_profile: Dict[str, Any] | None = None,
+    weather_context: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     """Call Volcengine Ark API to analyze diary emotion and return structured result."""
     persona = get_persona_by_name(persona_name)
@@ -274,11 +308,22 @@ def analyze_diary(
             "(Chinese or English), but keep JSON keys in English. "
         )
 
+    profile_context = _compact_profile_context(user_profile)
+    weather_snapshot = _compact_weather_context(weather_context)
+    personalization_instruction = (
+        "If user preference profile or weather context is provided, use it to tailor suggestions. "
+        "Connect advice to the user's real interests such as sports, games, movies, music genres, and MBTI only when useful. "
+        "Do not stereotype MBTI; treat it as a light self-understanding clue. "
+        "Use weather context practically, e.g. indoor options for rain, shade and hydration for heat, gentle outdoor activity for pleasant weather. "
+        "Do not mention precise coordinates or imply constant tracking. "
+    )
+
     system_text = (
         persona.system_prompt
         + "You are an AI assistant for an emotion diary app. "
         "The user will provide one diary entry (may contain emoji). "
-        "Please: "
+        + personalization_instruction
+        + "Please: "
         "1) Identify the main emotion (e.g. happy, sad, depressed, anxious, angry, calm, mixed, etc.); "
         "2) Give an emotion score from 0-100 based on emotional valence and well-being, not raw intensity. "
         "Negative emotions such as anger, sadness, anxiety, depression, fear, frustration, and stress must be below 50. "
@@ -304,6 +349,8 @@ def analyze_diary(
         "Here is the user diary content for today:\n"
         f"{content}\n\n"
         f"High-frequency keywords and counts in the last 14 days: {recent_keywords}\n"
+        f"User preference profile: {profile_context}\n"
+        f"Current city weather context: {weather_snapshot}\n"
         "Please analyze this in detail."
     )
 
