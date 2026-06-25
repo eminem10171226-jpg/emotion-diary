@@ -139,7 +139,7 @@
         <div id="analysis-error" class="error-box hidden"></div>
       </section>
       <section class="section card ritual-panel hidden" id="ritual-panel">
-        <div class="mailbox-title-row">
+        <div class="section-title-row">
           <div>
             <p class="section-kicker">Ritual</p>
             <h2 data-i18n="ritualTitle">情绪仪式</h2>
@@ -147,29 +147,8 @@
         </div>
         <div id="ritual-actions" class="ritual-actions"></div>
       </section>
-      <section class="section card future-panel">
-        <div class="mailbox-title-row">
-          <div>
-            <p class="section-kicker">Future Me</p>
-            <h2 data-i18n="futureTitle">未来的自己</h2>
-          </div>
-        </div>
-        <div class="future-form">
-          <textarea id="future-message" rows="3" placeholder="写一句话给未来的自己。" data-i18n-placeholder="futurePlaceholder"></textarea>
-          <div class="future-controls">
-            <select id="future-days">
-              <option value="1" data-i18n="tomorrow">明天</option>
-              <option value="3" data-i18n="after3Days">3 天后</option>
-              <option value="7" selected data-i18n="after7Days">7 天后</option>
-              <option value="14" data-i18n="after14Days">14 天后</option>
-            </select>
-            <button id="save-future" class="secondary-button" type="button" data-i18n="save">保存</button>
-          </div>
-        </div>
-        <div id="future-list" class="future-list"></div>
-      </section>
       <section class="section card privacy-panel">
-        <div class="mailbox-title-row">
+        <div class="section-title-row">
           <div>
             <p class="section-kicker">Private</p>
             <h2 data-i18n="privacyLockTitle">私密锁</h2>
@@ -181,16 +160,6 @@
           <button id="clear-pin" class="ghost-button" type="button" data-i18n="closePin">关闭</button>
         </div>
         <p id="privacy-status" class="privacy-lock-status"></p>
-      </section>
-      <section class="section card mailbox-panel">
-        <div class="mailbox-title-row">
-          <div>
-            <p class="section-kicker">Letters</p>
-            <h2 data-i18n="mailboxTitle">心情信箱</h2>
-          </div>
-          <button id="clear-mailbox" class="ghost-button" type="button" data-i18n="clear">清空</button>
-        </div>
-        <div id="mailbox-list" class="mailbox-list"></div>
       </section>
     </main>
     <footer class="footer-note" data-i18n="footerNote">AI 结果仅供参考，不替代专业心理咨询或医疗建议。</footer>

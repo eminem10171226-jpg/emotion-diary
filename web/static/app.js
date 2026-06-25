@@ -14,14 +14,8 @@
   const moodWeather = document.getElementById("mood-weather");
   const moodMap = document.getElementById("mood-map");
   const weeklyReport = document.getElementById("weekly-report");
-  const mailboxList = document.getElementById("mailbox-list");
-  const clearMailboxBtn = document.getElementById("clear-mailbox");
   const ritualPanel = document.getElementById("ritual-panel");
   const ritualActions = document.getElementById("ritual-actions");
-  const futureMessage = document.getElementById("future-message");
-  const futureDays = document.getElementById("future-days");
-  const saveFutureBtn = document.getElementById("save-future");
-  const futureList = document.getElementById("future-list");
   const pinInput = document.getElementById("pin-input");
   const savePinBtn = document.getElementById("save-pin");
   const clearPinBtn = document.getElementById("clear-pin");
@@ -44,12 +38,10 @@
   const hasAnalyzePage = !!(diary && analyzeBtn && resultEl && errorEl);
   const hasHistoryPage = !!historyList;
   const hasTrendPage = !!trendCanvas;
-  const APP_CLIENT_VERSION = "profile-weather-v1";
+  const APP_CLIENT_VERSION = "streamlined-home-v1";
   const ACTIVE_ANALYSIS_KEY = "emotionDiary.activeAnalysis";
   const UI_LANGUAGE_KEY = "emotionDiary.uiLanguage";
-  const MOOD_MAILBOX_KEY = "emotionDiary.moodMailbox";
   const GENTLE_TASK_KEY = "emotionDiary.gentleTasks";
-  const FUTURE_MESSAGES_KEY = "emotionDiary.futureMessages";
   const PIN_KEY = "emotionDiary.pin";
   const UNLOCKED_KEY = "emotionDiary.unlocked";
   const OFFLINE_DRAFTS_KEY = "emotionDiary.offlineDrafts";
@@ -124,18 +116,11 @@
       voiceUnsupported: "不支持语音",
       startAnalysis: "开始分析",
       ritualTitle: "情绪仪式",
-      futureTitle: "未来的自己",
-      futurePlaceholder: "写一句话给未来的自己。",
-      tomorrow: "明天",
-      after3Days: "3 天后",
-      after7Days: "7 天后",
-      after14Days: "14 天后",
       save: "保存",
       privacyLockTitle: "私密锁",
       pinPlaceholder: "设置 4 位 PIN",
       setPin: "设置",
       closePin: "关闭",
-      mailboxTitle: "心情信箱",
       clear: "清空",
       footerNote: "AI 结果仅供参考，不替代专业心理咨询或医疗建议。",
       navAnalyze: "分析",
@@ -190,7 +175,6 @@
       summaryTitle: "总结",
       gentleTaskTitle: "今日温柔任务",
       selfLetterTitle: "写给今天的自己",
-      saveToMailbox: "收藏到心情信箱",
       adviceTitle: "建议",
       musicTitle: "音乐建议",
       foodTitle: "饮食建议",
@@ -252,18 +236,11 @@
       voiceUnsupported: "Voice unavailable",
       startAnalysis: "Start analysis",
       ritualTitle: "Emotion ritual",
-      futureTitle: "Future me",
-      futurePlaceholder: "Write one sentence to your future self.",
-      tomorrow: "Tomorrow",
-      after3Days: "In 3 days",
-      after7Days: "In 7 days",
-      after14Days: "In 14 days",
       save: "Save",
       privacyLockTitle: "Private lock",
       pinPlaceholder: "Set a 4-digit PIN",
       setPin: "Set",
       closePin: "Turn off",
-      mailboxTitle: "Mood mailbox",
       clear: "Clear",
       footerNote: "AI results are for reference only and do not replace professional counseling or medical advice.",
       navAnalyze: "Analyze",
@@ -318,7 +295,6 @@
       summaryTitle: "Summary",
       gentleTaskTitle: "Gentle task today",
       selfLetterTitle: "A note to today's self",
-      saveToMailbox: "Save to mood mailbox",
       adviceTitle: "Suggestions",
       musicTitle: "Music",
       foodTitle: "Food",
@@ -741,87 +717,6 @@
     return "亲爱的自己，今天可能不容易。" + summary + "。请先把要求放低一点，你值得被温柔地接住。";
   }
 
-  function readMailbox() {
-    const letters = readStoredJson(MOOD_MAILBOX_KEY, []);
-    return Array.isArray(letters) ? letters : [];
-  }
-
-  function writeMailbox(letters) {
-    writeStoredJson(MOOD_MAILBOX_KEY, letters.slice(0, 24));
-  }
-
-  function renderMailbox() {
-    if (!mailboxList) return;
-    const letters = readMailbox();
-    if (!letters.length) {
-      mailboxList.innerHTML = "<div class='mailbox-empty'>收藏分析里的那封小信后，它会出现在这里。</div>";
-      if (clearMailboxBtn) clearMailboxBtn.classList.add("hidden");
-      return;
-    }
-    if (clearMailboxBtn) clearMailboxBtn.classList.remove("hidden");
-    mailboxList.innerHTML = letters.map(function (letter) {
-      return (
-        "<article class='mailbox-item'>" +
-        "<span>" + escapeHtml(letter.date || "") + "</span>" +
-        "<p>" + escapeHtml(letter.text || "") + "</p>" +
-        "</article>"
-      );
-    }).join("");
-  }
-
-  function saveLetter(text) {
-    const letters = readMailbox();
-    const key = todayKey() + ":" + text;
-    const withoutDuplicate = letters.filter(function (letter) {
-      return letter.key !== key;
-    });
-    withoutDuplicate.unshift({ key: key, date: todayKey(), text: text });
-    writeMailbox(withoutDuplicate);
-    renderMailbox();
-  }
-
-  function addDaysIso(days) {
-    const date = new Date();
-    date.setDate(date.getDate() + Number(days || 0));
-    return date.toISOString().slice(0, 10);
-  }
-
-  function renderFutureMessages() {
-    if (!futureList) return;
-    const messages = readStoredJson(FUTURE_MESSAGES_KEY, []);
-    if (!Array.isArray(messages) || !messages.length) {
-      futureList.innerHTML = "<div class='future-empty'>写给未来的提醒会保存在本机，到了日期会在这里亮起。</div>";
-      return;
-    }
-    const today = todayKey();
-    futureList.innerHTML = messages.map(function (item, index) {
-      const due = item.due || today;
-      const ready = due <= today;
-      return (
-        "<article class='future-item" + (ready ? " is-ready" : "") + "'>" +
-        "<span>" + (ready ? "可以打开" : "等待 " + escapeHtml(due)) + "</span>" +
-        "<p>" + escapeHtml(ready ? item.text : "这句话会在 " + due + " 之后显示。") + "</p>" +
-        "<button type='button' class='ghost-button' data-delete-future='" + index + "'>删除</button>" +
-        "</article>"
-      );
-    }).join("");
-  }
-
-  function saveFutureMessage() {
-    if (!futureMessage || !futureDays) return;
-    const text = (futureMessage.value || "").trim();
-    if (!text) return;
-    const messages = readStoredJson(FUTURE_MESSAGES_KEY, []);
-    messages.unshift({
-      text: text,
-      created: todayKey(),
-      due: addDaysIso(futureDays.value),
-    });
-    writeStoredJson(FUTURE_MESSAGES_KEY, messages.slice(0, 20));
-    futureMessage.value = "";
-    renderFutureMessages();
-  }
-
   function pinHash(pin) {
     return String(hashString("emotion-diary-pin:" + pin));
   }
@@ -1008,12 +903,8 @@
   function renderRituals(data) {
     if (!ritualPanel || !ritualActions) return;
     ritualPanel.classList.remove("hidden");
-    const summary = data.summary || "今天已经被你认真看见";
-    const letter = buildSelfLetter(data, clampScore(data.emotion_score));
     ritualActions.innerHTML = (
       "<button type='button' class='ritual-button' data-ritual='release'>把今天放下</button>" +
-      "<button type='button' class='ritual-button' data-ritual='save' data-save-letter='" + escapeHtml(letter) + "'>保存这一刻</button>" +
-      "<button type='button' class='ritual-button' data-ritual='tomorrow' data-future='" + escapeHtml(summary) + "'>给明天一点提醒</button>" +
       "<p id='ritual-status' class='ritual-status'></p>"
     );
   }
@@ -1240,7 +1131,6 @@
       "<div class='self-letter-card'>" +
       "<h4>" + t("selfLetterTitle") + "</h4>" +
       "<p>" + escapeHtml(letter) + "</p>" +
-      "<button type='button' class='ghost-button' data-save-letter=\"" + escapeHtml(letter) + "\">" + t("saveToMailbox") + "</button>" +
       "</div>" +
       "<div class='analysis-block'><h4>" + t("adviceTitle") + "</h4><ul>" + adviceHtml + "</ul></div>" +
       "<div class='analysis-grid'>" +
@@ -1331,8 +1221,6 @@
     initProfile();
     loadPet();
     restoreActiveAnalysis();
-    renderMailbox();
-    renderFutureMessages();
     renderOfflineDrafts();
     initVoiceDiary();
     updateDraftCount();
@@ -1340,11 +1228,6 @@
     resultEl.addEventListener("click", function (event) {
       const clearButton = event.target.closest("[data-clear-analysis]");
       if (clearButton) clearActiveAnalysis();
-      const saveButton = event.target.closest("[data-save-letter]");
-      if (saveButton) {
-        saveLetter(saveButton.dataset.saveLetter || "");
-        saveButton.textContent = "已收藏";
-      }
     });
     if (offlineDrafts) {
       offlineDrafts.addEventListener("click", function (event) {
@@ -1362,38 +1245,12 @@
         diary.focus();
       });
     }
-    if (saveFutureBtn) {
-      saveFutureBtn.addEventListener("click", saveFutureMessage);
-    }
-    if (futureList) {
-      futureList.addEventListener("click", function (event) {
-        const deleteButton = event.target.closest("[data-delete-future]");
-        if (!deleteButton) return;
-        const messages = readStoredJson(FUTURE_MESSAGES_KEY, []);
-        messages.splice(Number(deleteButton.dataset.deleteFuture), 1);
-        writeStoredJson(FUTURE_MESSAGES_KEY, messages);
-        renderFutureMessages();
-      });
-    }
     if (ritualActions) {
       ritualActions.addEventListener("click", function (event) {
         const ritualButton = event.target.closest("[data-ritual]");
         if (!ritualButton) return;
         const status = document.getElementById("ritual-status");
-        if (ritualButton.dataset.saveLetter) {
-          saveLetter(ritualButton.dataset.saveLetter);
-          if (status) status.textContent = "这一刻已保存到心情信箱。";
-        } else if (ritualButton.dataset.future) {
-          const messages = readStoredJson(FUTURE_MESSAGES_KEY, []);
-          messages.unshift({
-            text: "明天提醒：" + ritualButton.dataset.future,
-            created: todayKey(),
-            due: addDaysIso(1),
-          });
-          writeStoredJson(FUTURE_MESSAGES_KEY, messages.slice(0, 20));
-          renderFutureMessages();
-          if (status) status.textContent = "已为明天留下提醒。";
-        } else if (status) {
+        if (status) {
           status.textContent = "今天已经被你轻轻放下。";
         }
       });
@@ -1404,13 +1261,6 @@
         setTaskDone(taskToggle.dataset.gentleTask || "", taskToggle.checked);
       }
     });
-    if (clearMailboxBtn) {
-      clearMailboxBtn.addEventListener("click", function () {
-        writeMailbox([]);
-        renderMailbox();
-      });
-    }
-
     analyzeBtn.addEventListener("click", async function () {
     const content = (diary.value || "").trim();
     if (!content) {
